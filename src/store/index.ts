@@ -59,11 +59,11 @@ interface SaloonState {
 }
 
 const DEFAULT_SERVICES: Service[] = [
-  { id: 's1', name: 'Classic Haircut', base_price: 25, active: true },
-  { id: 's2', name: 'Beard Trim & Detail', base_price: 18, active: true },
-  { id: 's3', name: 'Signature Hair Color', base_price: 60, active: true },
-  { id: 's4', name: 'Kids Cut', base_price: 20, active: true },
-  { id: 's5', name: 'Hot Towel Shave', base_price: 22, active: true },
+  { id: 's1', name: 'Classic Haircut', base_price: 1500, active: true },
+  { id: 's2', name: 'Beard Trim & Detail', base_price: 1000, active: true },
+  { id: 's3', name: 'Signature Hair Color', base_price: 4000, active: true },
+  { id: 's4', name: 'Kids Cut', base_price: 800, active: true },
+  { id: 's5', name: 'Hot Towel Shave', base_price: 1200, active: true },
 ];
 
 const DEFAULT_PROFILES: Profile[] = [

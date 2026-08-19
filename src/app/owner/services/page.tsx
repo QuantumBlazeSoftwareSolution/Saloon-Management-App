@@ -107,15 +107,15 @@ export default function OwnerServicesPage() {
                 Base Price
               </label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-650" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-650">Rs.</span>
                 <input
                   type="number"
                   step="0.01"
                   required
-                  placeholder="25.00"
+                  placeholder="2500.00"
                   value={priceStr}
                   onChange={(e) => setPriceStr(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-2.5 pl-8 pr-3 text-xs text-white focus:border-yellow-500 focus:outline-none font-mono"
+                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-2.5 pl-10 pr-3 text-xs text-white focus:border-yellow-500 focus:outline-none font-mono"
                 />
               </div>
             </div>
@@ -159,7 +159,7 @@ export default function OwnerServicesPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Price ($)</label>
+                        <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Price (Rs.)</label>
                         <input
                           type="number"
                           step="0.01"
@@ -220,7 +220,7 @@ export default function OwnerServicesPage() {
                         )}
                       </span>
                       <span className="text-[10px] text-zinc-500 mt-0.5 font-bold font-mono">
-                        Base Rate: ${service.base_price.toFixed(2)}
+                        Base Rate: Rs. {service.base_price.toFixed(2)}
                       </span>
                     </div>
                   </div>

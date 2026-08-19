@@ -99,7 +99,7 @@ export default function OwnerTodayPage() {
           transition={{ duration: 0.3 }}
           className="text-4xl lg:text-5xl font-black text-yellow-500 font-mono tracking-tight"
         >
-          ${totalRevenue.toFixed(2)}
+          Rs. {totalRevenue.toFixed(2)}
         </motion.div>
         <span className="text-xs text-zinc-500 block">updates immediately upon barber log</span>
         
@@ -121,7 +121,7 @@ export default function OwnerTodayPage() {
         <div className="border border-zinc-900 bg-zinc-900/20 rounded-xl p-3 flex flex-col justify-between h-20">
           <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest leading-none">Avg Ticket</span>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-xl font-bold text-white font-mono">${avgTicket.toFixed(0)}</span>
+            <span className="text-xl font-bold text-white font-mono">Rs. {avgTicket.toFixed(0)}</span>
             <span className="text-[10px] text-zinc-600 font-semibold font-mono">ea</span>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function OwnerTodayPage() {
 
                   <div className="text-right flex flex-col gap-0.5">
                     <span className="text-sm font-bold text-white font-mono">
-                      ${price.toFixed(2)}
+                      Rs. {price.toFixed(2)}
                     </span>
                     <span className="text-[9px] text-zinc-500 font-semibold font-mono">
                       {formattedTime}

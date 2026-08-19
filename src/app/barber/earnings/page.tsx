@@ -62,7 +62,7 @@ export default function BarberEarningsPage() {
             <CalendarDays className="h-4 w-4 text-amber-500" />
           </div>
           <div className="mt-4">
-            <span className="text-2xl font-black text-white font-mono">${weeklyCommission.toFixed(2)}</span>
+            <span className="text-2xl font-black text-white font-mono">Rs. {weeklyCommission.toFixed(2)}</span>
             <p className="text-[10px] text-zinc-500 font-bold mt-1 uppercase">Past 7 Days</p>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function BarberEarningsPage() {
             <Award className="h-4 w-4 text-amber-500" />
           </div>
           <div className="mt-4">
-            <span className="text-2xl font-black text-white font-mono">${monthlyCommission.toFixed(2)}</span>
+            <span className="text-2xl font-black text-white font-mono">Rs. {monthlyCommission.toFixed(2)}</span>
             <p className="text-[10px] text-zinc-500 font-bold mt-1 uppercase">Past 30 Days</p>
           </div>
         </div>
@@ -101,7 +101,7 @@ export default function BarberEarningsPage() {
                 stroke="#52525b" 
                 tickLine={false} 
                 axisLine={false} 
-                tickFormatter={(v) => `$${v}`}
+                tickFormatter={(v) => `Rs.${v}`}
                 fontSize={10}
                 fontWeight={750}
               />
@@ -114,7 +114,7 @@ export default function BarberEarningsPage() {
                   color: '#fff',
                   fontFamily: 'monospace',
                 }}
-                formatter={(value: any) => [`$${value}`, 'Earned']}
+                formatter={(value: any) => [`Rs. ${value}`, 'Earned']}
               />
               <Bar 
                 dataKey="earnings" 
@@ -135,7 +135,7 @@ export default function BarberEarningsPage() {
         </div>
         <div className="text-right flex flex-col gap-0.5">
           <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-semibold">Total Share Earned</span>
-          <span className="text-base font-black text-amber-400 font-mono">${totalCommission.toFixed(2)}</span>
+          <span className="text-base font-black text-amber-400 font-mono">Rs. {totalCommission.toFixed(2)}</span>
         </div>
       </div>
     </div>

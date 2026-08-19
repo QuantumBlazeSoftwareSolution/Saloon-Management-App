@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, Check, Percent } from 'lucide-react';
@@ -16,6 +16,11 @@ export default function AddServicePage() {
   const [discountPct, setDiscountPct] = useState(0);
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const activeService = services.find(s => s.id === selectedServiceId);
   const barberId = currentProfile?.id || '';
@@ -59,6 +64,32 @@ export default function AddServicePage() {
     setShowDiscountInput(pct === -1); // show manual input if custom selected
   };
 
+  const handlePctChange = (val: number) => {
+    setDiscountPct(Math.min(100, Math.max(0, val)));
+  };
+
+  const handleLkrChange = (val: number) => {
+    if (basePrice > 0) {
+      const pct = Math.min(100, Math.max(0, (val / basePrice) * 100));
+      setDiscountPct(pct);
+    }
+  };
+
+  if (!mounted) {
+    return (
+      <div className="space-y-6 animate-pulse mt-4">
+        <div className="h-6 bg-zinc-900 rounded-lg w-1/3" />
+        <div className="h-8 bg-zinc-900 rounded-lg w-1/2" />
+        <div className="grid grid-cols-2 gap-3 mt-8">
+          <div className="h-24 bg-zinc-900 rounded-xl" />
+          <div className="h-24 bg-zinc-900 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  const derivedLkrDiscount = Number(((discountPct * basePrice) / 100).toFixed(2));
+
   return (
     <div className="space-y-6">
       {/* Header Greeting */}
@@ -90,7 +121,7 @@ export default function AddServicePage() {
                 >
                   <span className="font-bold text-sm leading-snug">{service.name}</span>
                   <span className={`text-base font-extrabold font-mono ${isSelected ? 'text-amber-400' : 'text-zinc-400'}`}>
-                    ${service.base_price.toFixed(2)}
+                    Rs. {service.base_price.toFixed(2)}
                   </span>
                 </div>
               );
@@ -111,7 +142,7 @@ export default function AddServicePage() {
               </label>
               {discountPct > 0 && (
                 <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold">
-                  {discountPct}% off
+                  {discountPct.toFixed(1)}% off
                 </span>
               )}
             </div>
@@ -148,7 +179,7 @@ export default function AddServicePage() {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="pt-2"
+                className="pt-2 grid grid-cols-2 gap-3"
               >
                 <div className="relative">
                   <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
@@ -156,10 +187,24 @@ export default function AddServicePage() {
                     type="number"
                     min={0}
                     max={100}
-                    placeholder="Discount percentage"
-                    value={discountPct === -1 ? '' : discountPct}
-                    onChange={(e) => setDiscountPct(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                    className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 py-2 pl-9 pr-4 text-sm text-white placeholder-zinc-700 focus:border-amber-500 focus:outline-none"
+                    step="any"
+                    placeholder="Discount %"
+                    value={discountPct || ''}
+                    onChange={(e) => handlePctChange(parseFloat(e.target.value) || 0)}
+                    className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 py-2.5 pl-9 pr-3 text-xs text-white placeholder-zinc-700 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-650">Rs.</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={basePrice}
+                    step="any"
+                    placeholder="LKR Amount"
+                    value={derivedLkrDiscount || ''}
+                    onChange={(e) => handleLkrChange(parseFloat(e.target.value) || 0)}
+                    className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 py-2.5 pl-10 pr-3 text-xs text-white placeholder-zinc-700 focus:border-amber-500 focus:outline-none font-mono"
                   />
                 </div>
               </motion.div>
@@ -177,12 +222,12 @@ export default function AddServicePage() {
             <div className="flex flex-col gap-0.5">
               <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Your Share ({commissionPct}%)</span>
               <span className="font-mono text-zinc-400">
-                ${discountedPrice.toFixed(2)} total ticket
+                Rs. {discountedPrice.toFixed(2)} total ticket
               </span>
             </div>
             <div className="text-right">
               <span className="text-lg font-black text-amber-500 font-mono">
-                ${estimatedCommission.toFixed(2)}
+                Rs. {estimatedCommission.toFixed(2)}
               </span>
             </div>
           </motion.div>
@@ -230,7 +275,7 @@ export default function AddServicePage() {
         </div>
         <div className="text-right flex flex-col">
           <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Today's Earnings</span>
-          <span className="text-lg font-black text-amber-400 font-mono mt-0.5">${todayEarned.toFixed(2)}</span>
+          <span className="text-lg font-black text-amber-400 font-mono mt-0.5">Rs. {todayEarned.toFixed(2)}</span>
         </div>
       </div>
     </div>

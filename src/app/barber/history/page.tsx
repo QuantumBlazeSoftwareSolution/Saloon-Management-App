@@ -178,10 +178,10 @@ export default function BarberHistoryPage() {
                         <div className="flex items-center gap-3">
                           <div className="text-right flex flex-col">
                             <span className="text-sm font-bold text-white font-mono">
-                              ${price.toFixed(2)}
+                              Rs. {price.toFixed(2)}
                             </span>
                             <span className="text-[10px] font-black text-amber-500 font-mono">
-                              +${log.commission_amount.toFixed(2)}
+                              +Rs. {log.commission_amount.toFixed(2)}
                             </span>
                           </div>
 

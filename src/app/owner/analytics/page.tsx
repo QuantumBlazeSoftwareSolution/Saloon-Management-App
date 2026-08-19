@@ -199,7 +199,7 @@ export default function OwnerAnalyticsPage() {
             <TrendingUp className="h-4 w-4 text-yellow-500" />
           </div>
           <div>
-            <span className="text-2xl font-black text-white font-mono">${totalRevenue.toFixed(0)}</span>
+            <span className="text-2xl font-black text-white font-mono">Rs. {totalRevenue.toFixed(0)}</span>
           </div>
         </div>
 
@@ -209,7 +209,7 @@ export default function OwnerAnalyticsPage() {
             <Users className="h-4 w-4 text-yellow-500" />
           </div>
           <div>
-            <span className="text-2xl font-black text-zinc-400 font-mono">${totalCommission.toFixed(0)}</span>
+            <span className="text-2xl font-black text-zinc-400 font-mono">Rs. {totalCommission.toFixed(0)}</span>
           </div>
         </div>
 
@@ -219,7 +219,7 @@ export default function OwnerAnalyticsPage() {
             <Landmark className="h-4 w-4 text-emerald-500" />
           </div>
           <div>
-            <span className="text-2xl font-black text-emerald-400 font-mono">${netEarnings.toFixed(0)}</span>
+            <span className="text-2xl font-black text-emerald-400 font-mono">Rs. {netEarnings.toFixed(0)}</span>
           </div>
         </div>
       </div>
@@ -236,11 +236,11 @@ export default function OwnerAnalyticsPage() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
                 <XAxis dataKey="name" stroke="#52525b" tickLine={false} axisLine={false} />
-                <YAxis stroke="#52525b" tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                <YAxis stroke="#52525b" tickLine={false} axisLine={false} tickFormatter={(v) => `Rs.${v}`} />
                 <Tooltip
                   cursor={{ fill: 'rgba(212, 175, 55, 0.03)' }}
                   contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  formatter={(value: any) => [`$${value}`, 'Revenue']}
+                  formatter={(value: any) => [`Rs. ${value}`, 'Revenue']}
                 />
                 <Bar dataKey="revenue" fill="#d4af37" radius={[4, 4, 0, 0]} maxBarSize={24} />
               </BarChart>
@@ -258,10 +258,10 @@ export default function OwnerAnalyticsPage() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={areaChartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <XAxis dataKey="name" stroke="#52525b" tickLine={false} axisLine={false} />
-                <YAxis stroke="#52525b" tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                <YAxis stroke="#52525b" tickLine={false} axisLine={false} tickFormatter={(v) => `Rs.${v}`} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                  formatter={(value: any) => [`$${value}`, 'Total Revenue']}
+                  formatter={(value: any) => [`Rs. ${value}`, 'Total Revenue']}
                 />
                 <Area type="monotone" dataKey="cumulative" stroke="#10b981" fill="rgba(16, 185, 129, 0.05)" strokeWidth={2.5} />
               </AreaChart>
@@ -297,7 +297,7 @@ export default function OwnerAnalyticsPage() {
                   </Pie>
                   <Tooltip
                     contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px', color: '#fff' }}
-                    formatter={(value: any) => [`$${value}`, 'Share']}
+                    formatter={(value: any) => [`Rs. ${value}`, 'Share']}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -310,7 +310,7 @@ export default function OwnerAnalyticsPage() {
                     <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                     <span className="text-zinc-400 font-medium truncate max-w-[130px]">{item.name}</span>
                   </div>
-                  <span className="font-bold text-white font-mono">${item.value}</span>
+                  <span className="font-bold text-white font-mono">Rs. {item.value}</span>
                 </div>
               ))}
             </div>
@@ -338,7 +338,7 @@ export default function OwnerAnalyticsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="font-black text-sm text-yellow-500 font-mono">${barber.total.toFixed(0)}</span>
+                    <span className="font-black text-sm text-yellow-500 font-mono">Rs. {barber.total.toFixed(0)}</span>
                   </div>
                 </div>
               ))
