@@ -7,7 +7,8 @@ import { DollarSign, Check, Percent } from 'lucide-react';
 
 export default function AddServicePage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
-  const services = useSaloonStore((state) => state.services.filter(s => s.active));
+  const servicesRaw = useSaloonStore((state) => state.services);
+  const services = servicesRaw.filter(s => s.active);
   const logs = useSaloonStore((state) => state.logs);
   const logService = useSaloonStore((state) => state.logService);
 

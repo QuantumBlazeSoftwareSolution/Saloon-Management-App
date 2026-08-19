@@ -12,11 +12,11 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const currentProfile = useSaloonStore((state) => state.currentProfile);
   const authRole = useSaloonStore((state) => state.authRole);
-  
-  // Realtime simulation trigger
   const logService = useSaloonStore((state) => state.logService);
-  const services = useSaloonStore((state) => state.services.filter(s => s.active));
-  const profiles = useSaloonStore((state) => state.profiles.filter(p => p.role === 'barber' && p.active));
+  const servicesRaw = useSaloonStore((state) => state.services);
+  const profilesRaw = useSaloonStore((state) => state.profiles);
+  const services = servicesRaw.filter(s => s.active);
+  const profiles = profilesRaw.filter(p => p.role === 'barber' && p.active);
 
   useEffect(() => {
     if (!currentProfile || authRole !== 'owner') {

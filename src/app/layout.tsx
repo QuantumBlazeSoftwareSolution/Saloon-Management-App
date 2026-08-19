@@ -33,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable}`}>
+    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <body className="antialiased min-h-screen bg-zinc-950 text-zinc-100 selection:bg-amber-500 selection:text-black">
         {children}
         <PwaUpdater />
