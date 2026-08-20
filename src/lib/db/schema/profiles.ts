@@ -11,6 +11,7 @@ export const profilesTable = pgTable('profiles', {
   email: text('email'),
   avatarUrl: text('avatar_url'),
   commissionPct: integer('commission_pct').default(50).notNull(),
+  pin: text('pin'),
   active: boolean('active').default(true).notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')

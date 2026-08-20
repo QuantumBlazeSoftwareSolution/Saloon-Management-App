@@ -18,6 +18,7 @@ export interface Profile {
   role: 'barber' | 'owner';
   avatar_url?: string;
   commission_pct: number; // e.g. 50 for 50%
+  pin?: string;
   active: boolean;
 }
 
@@ -44,7 +45,7 @@ interface SaloonState {
   saloonName: string;
   
   // Actions
-  login: (role: 'barber' | 'owner', identifier: string) => boolean;
+  login: (role: 'barber' | 'owner', identifier: string, pin?: string) => boolean;
   logout: () => void;
   logService: (barberId: string, serviceId: string, discountPct: number, customCommissionPct?: number) => void;
   deleteLog: (logId: string) => ServiceLog | null;
@@ -53,7 +54,7 @@ interface SaloonState {
   // Admin Actions
   addService: (name: string, basePrice: number) => void;
   updateService: (id: string, name: string, basePrice: number, active: boolean) => void;
-  addBarber: (name: string, phone: string, commissionPct: number) => void;
+  addBarber: (name: string, phone: string, commissionPct: number) => string;
   updateBarber: (id: string, name: string, phone: string, commissionPct: number, active: boolean) => void;
   updateSaloonName: (name: string) => void;
 }
@@ -68,9 +69,9 @@ const DEFAULT_SERVICES: Service[] = [
 
 const DEFAULT_PROFILES: Profile[] = [
   { id: 'p_owner', full_name: 'Marcus Sterling', phone: '0771234567', email: 'marcus@saloon.com', role: 'owner', commission_pct: 0, active: true },
-  { id: 'p_barber1', full_name: 'Alex Carter', phone: '0777111222', role: 'barber', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', commission_pct: 60, active: true },
-  { id: 'p_barber2', full_name: 'Jordan Finch', phone: '0777333444', role: 'barber', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', commission_pct: 50, active: true },
-  { id: 'p_barber3', full_name: 'Sam Brooks', phone: '0777555666', role: 'barber', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', commission_pct: 55, active: true },
+  { id: 'p_barber1', full_name: 'Alex Carter', phone: '0777111222', role: 'barber', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', commission_pct: 60, pin: '1234', active: true },
+  { id: 'p_barber2', full_name: 'Jordan Finch', phone: '0777333444', role: 'barber', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', commission_pct: 50, pin: '5678', active: true },
+  { id: 'p_barber3', full_name: 'Sam Brooks', phone: '0777555666', role: 'barber', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', commission_pct: 55, pin: '9999', active: true },
 ];
 
 // Helper to seed logs over the past week for dashboard analytics
@@ -133,7 +134,7 @@ export const useSaloonStore = create<SaloonState>()(
       authRole: null,
       saloonName: 'The Sterling Groom',
 
-      login: (role, identifier) => {
+      login: (role, identifier, pin) => {
         const state = get();
         const cleanedId = identifier.trim().toLowerCase();
         
@@ -141,7 +142,7 @@ export const useSaloonStore = create<SaloonState>()(
           if (role === 'owner') {
             return p.role === 'owner' && (p.email?.toLowerCase() === cleanedId || p.phone === cleanedId);
           } else {
-            return p.role === 'barber' && p.phone === cleanedId;
+            return p.role === 'barber' && p.phone === cleanedId && (!pin || p.pin === pin);
           }
         });
 
@@ -149,14 +150,15 @@ export const useSaloonStore = create<SaloonState>()(
         if (!found && role === 'owner') {
           found = state.profiles.find(p => p.role === 'owner') || DEFAULT_PROFILES[0];
         } else if (!found && role === 'barber') {
-          // If phone is not in predefined profiles, dynamically create a barber profile to keep UX smooth
+          // If phone is not in predefined profiles, dynamically create a barber profile with the specified PIN (or 1234)
           const newId = `p_dyn_${Date.now()}`;
           const newProfile: Profile = {
             id: newId,
-            full_name: identifier.includes('@') ? identifier.split('@')[0] : `Barber (${identifier})`,
+            full_name: `Barber (${identifier})`,
             phone: identifier,
             role: 'barber',
             commission_pct: 50,
+            pin: pin || '1234',
             active: true,
           };
           set(prev => ({
@@ -247,17 +249,20 @@ export const useSaloonStore = create<SaloonState>()(
       },
 
       addBarber: (name, phone, commissionPct) => {
+        const generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
         const newBarber: Profile = {
           id: `p_barber_${Date.now()}`,
           full_name: name,
           phone,
           role: 'barber',
           commission_pct: commissionPct,
+          pin: generatedPin,
           active: true,
         };
         set(prev => ({
           profiles: [...prev.profiles, newBarber],
         }));
+        return generatedPin;
       },
 
       updateBarber: (id, name, phone, commissionPct, active) => {

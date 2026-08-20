@@ -18,7 +18,7 @@ export async function getProfilesBySaloonId(saloonId: string) {
     .where(eq(profilesTable.saloonId, saloonId));
 }
 
-export async function authenticateProfile(role: 'barber' | 'owner', identifier: string) {
+export async function authenticateProfile(role: 'barber' | 'owner', identifier: string, pin?: string) {
   if (role === 'owner') {
     // Owner signs in via email or phone
     const result = await db
@@ -33,16 +33,19 @@ export async function authenticateProfile(role: 'barber' | 'owner', identifier: 
       .limit(1);
     return result[0] || null;
   } else {
-    // Barber signs in via phone
+    // Barber signs in via phone + pin
+    const conditions = [
+      eq(profilesTable.role, 'barber'),
+      eq(profilesTable.phone, identifier)
+    ];
+    if (pin) {
+      conditions.push(eq(profilesTable.pin, pin));
+    }
+    
     const result = await db
       .select()
       .from(profilesTable)
-      .where(
-        and(
-          eq(profilesTable.role, 'barber'),
-          eq(profilesTable.phone, identifier)
-        )
-      )
+      .where(and(...conditions))
       .limit(1);
     return result[0] || null;
   }
