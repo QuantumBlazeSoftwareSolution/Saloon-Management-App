@@ -2,14 +2,12 @@ import { NextResponse } from 'next/server';
 import { createProfile } from '@/lib/db/profiles/write';
 import { createUser } from '@/lib/db/users/write';
 import { authenticateUser } from '@/lib/db/users/read';
+import { validateApiKey } from '@/lib/proxy';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
-    const apiKey = request.headers.get('x-api-key');
-    const expectedKey = process.env.API_KEY || 'sterling-secret-key-101';
-
-    if (!apiKey || apiKey !== expectedKey) {
+    if (!validateApiKey(request.headers)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
