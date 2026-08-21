@@ -2,14 +2,10 @@ import { NextResponse } from 'next/server';
 import { createProfile } from '@/lib/db/profiles/write';
 import { createUser } from '@/lib/db/users/write';
 import { authenticateUser } from '@/lib/db/users/read';
-import { validateApiKey } from '@/lib/proxy';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
-    if (!validateApiKey(request.headers)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const body = await request.json();
     const { role, fullName, phone, email, password, commissionPct, saloonId } = body;
