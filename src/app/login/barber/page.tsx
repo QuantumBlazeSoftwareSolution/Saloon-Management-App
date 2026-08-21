@@ -16,7 +16,7 @@ export default function BarberLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone || phone.length < 9) {
       setError('Please enter a valid phone number');
@@ -30,16 +30,24 @@ export default function BarberLogin() {
     setError('');
     setLoading(true);
     
-    // Authenticate via store
-    setTimeout(() => {
-      const success = login('barber', phone, pin);
+    try {
+      const { loginBarberAction } = await import('@/lib/actions/auth');
+      const res = await loginBarberAction(phone, pin);
       setLoading(false);
-      if (success) {
+      
+      if (res.success && res.profile) {
+        useSaloonStore.setState({
+          currentProfile: res.profile as any,
+          authRole: 'barber'
+        });
         router.replace('/barber');
       } else {
-        setError('Login failed. Invalid phone number or PIN.');
+        setError(res.error || 'Login failed. Invalid phone number or PIN.');
       }
-    }, 1000);
+    } catch (err: any) {
+      setLoading(false);
+      setError(err.message || 'An error occurred during sign-in.');
+    }
   };
 
   return (

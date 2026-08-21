@@ -61,70 +61,9 @@ interface SaloonState {
   updateSaloonName: (name: string) => void;
 }
 
-const DEFAULT_SERVICES: Service[] = [
-  { id: 's1', name: 'Classic Haircut', base_price: 1500, active: true },
-  { id: 's2', name: 'Beard Trim & Detail', base_price: 1000, active: true },
-  { id: 's3', name: 'Signature Hair Color', base_price: 4000, active: true },
-  { id: 's4', name: 'Kids Cut', base_price: 800, active: true },
-  { id: 's5', name: 'Hot Towel Shave', base_price: 1200, active: true },
-];
-
-const DEFAULT_PROFILES: Profile[] = [
-  { id: 'p_owner', full_name: 'Marcus Sterling', phone: '0771234567', email: 'marcus@saloon.com', role: 'owner', commission_pct: 0, active: true },
-  { id: 'p_barber1', full_name: 'Alex Carter', phone: '0777111222', role: 'barber', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', commission_pct: 60, pin: '1234', active: true },
-  { id: 'p_barber2', full_name: 'Jordan Finch', phone: '0777333444', role: 'barber', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', commission_pct: 50, pin: '5678', active: true },
-  { id: 'p_barber3', full_name: 'Sam Brooks', phone: '0777555666', role: 'barber', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', commission_pct: 55, pin: '9999', active: true },
-];
-
-// Helper to seed logs over the past week for dashboard analytics
-const seedLogs = (): ServiceLog[] => {
-  const seeded: ServiceLog[] = [];
-  const servicePool = DEFAULT_SERVICES;
-  const barberPool = DEFAULT_PROFILES.filter(p => p.role === 'barber');
-  const now = new Date();
-
-  // Create logs for past 7 days
-  for (let d = 7; d >= 0; d--) {
-    const logDate = new Date();
-    logDate.setDate(now.getDate() - d);
-    // Don't log past current hour for today
-    const servicesCount = d === 0 ? 5 : Math.floor(Math.random() * 12) + 8; // 8-20 services per day
-
-    for (let s = 0; s < servicesCount; s++) {
-      const barber = barberPool[Math.floor(Math.random() * barberPool.length)];
-      const service = servicePool[Math.floor(Math.random() * servicePool.length)];
-      
-      const hour = d === 0 ? Math.floor(Math.random() * (now.getHours() - 8 + 1)) + 8 : Math.floor(Math.random() * 10) + 9; // 9 AM to 7 PM
-      const minute = Math.floor(Math.random() * 60);
-      const specificDate = new Date(logDate);
-      specificDate.setHours(hour, minute, 0, 0);
-
-      const price = service.base_price;
-      const discountPct = Math.random() > 0.85 ? (Math.random() > 0.5 ? 10 : 20) : 0;
-      const discountedPrice = price * (1 - discountPct / 100);
-      const commissionPct = barber.commission_pct;
-      const commissionAmount = Number((discountedPrice * (commissionPct / 100)).toFixed(2));
-      const netAmount = Number((discountedPrice - commissionAmount).toFixed(2));
-
-      seeded.push({
-        id: `log_${d}_${s}_${Math.random().toString(36).substr(2, 5)}`,
-        barber_id: barber.id,
-        barber_name: barber.full_name,
-        service_id: service.id,
-        service_name: service.name,
-        price_at_time: price,
-        discount_pct: discountPct,
-        commission_pct: commissionPct,
-        commission_amount: commissionAmount,
-        net_amount: netAmount,
-        created_at: specificDate.toISOString(),
-      });
-    }
-  }
-
-  // Sort logs by time ascending
-  return seeded.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-};
+const DEFAULT_SERVICES: Service[] = [];
+const DEFAULT_PROFILES: Profile[] = [];
+const seedLogs = (): ServiceLog[] => [];
 
 export const useSaloonStore = create<SaloonState>()(
   persist(

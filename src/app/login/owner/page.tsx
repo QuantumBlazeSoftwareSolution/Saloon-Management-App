@@ -6,7 +6,7 @@ import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Mail, Lock, ShieldAlert, Key } from 'lucide-react';
 import Link from 'next/link';
-import { sendOwnerOtpAction, verifyOwnerOtpAction } from '@/lib/actions/profiles';
+import { loginOwnerAction, verifyOwnerOtpAction } from '@/lib/actions/auth';
 
 export default function OwnerLogin() {
   const router = useRouter();
@@ -29,14 +29,13 @@ export default function OwnerLogin() {
     setLoading(true);
 
     try {
-      // Send OTP to owner email using nodemailer action
-      const res = await sendOwnerOtpAction(email);
+      const res = await loginOwnerAction(email, password);
       setLoading(false);
       
       if (res.success) {
         setStep('otp');
       } else {
-        setError(res.error || 'Failed to dispatch email verification OTP.');
+        setError(res.error || 'Failed to verify credentials.');
       }
     } catch (err: any) {
       setLoading(false);
@@ -57,14 +56,12 @@ export default function OwnerLogin() {
       const res = await verifyOwnerOtpAction(email, otpCode);
       setLoading(false);
 
-      if (res.success) {
-        // Hydrate Zustand local session
-        const storeLoginSuccess = login('owner', email);
-        if (storeLoginSuccess) {
-          router.replace('/owner');
-        } else {
-          setError('Failed to configure local session storage.');
-        }
+      if (res.success && res.profile) {
+        useSaloonStore.setState({
+          currentProfile: res.profile as any,
+          authRole: 'owner'
+        });
+        router.replace('/owner');
       } else {
         setError(res.error || 'Invalid or expired verification code.');
       }
