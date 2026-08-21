@@ -12,6 +12,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const currentProfile = useSaloonStore((state) => state.currentProfile);
   const authRole = useSaloonStore((state) => state.authRole);
+  const _hasHydrated = useSaloonStore((state) => state._hasHydrated);
   const logService = useSaloonStore((state) => state.logService);
   const servicesRaw = useSaloonStore((state) => state.services);
   const profilesRaw = useSaloonStore((state) => state.profiles);
@@ -19,14 +20,15 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   const profiles = profilesRaw.filter(p => p.role === 'barber' && p.active);
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (!currentProfile || authRole !== 'owner') {
       router.replace('/login');
     }
-  }, [currentProfile, authRole, router]);
+  }, [currentProfile, authRole, _hasHydrated, router]);
 
   // Simulate other barbers logging services in real-time
   useEffect(() => {
-    if (!currentProfile || authRole !== 'owner') return;
+    if (!_hasHydrated || !currentProfile || authRole !== 'owner') return;
 
     const interval = setInterval(() => {
       // 30% chance every 15 seconds to simulate a barber logging a service
@@ -40,7 +42,15 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     }, 15000);
 
     return () => clearInterval(interval);
-  }, [currentProfile, authRole, services, profiles, logService]);
+  }, [currentProfile, authRole, services, profiles, logService, _hasHydrated]);
+
+  if (!_hasHydrated) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-[10px] text-zinc-650 font-bold uppercase tracking-widest font-mono">
+        Authenticating Owner...
+      </div>
+    );
+  }
 
   if (!currentProfile || authRole !== 'owner') {
     return null;

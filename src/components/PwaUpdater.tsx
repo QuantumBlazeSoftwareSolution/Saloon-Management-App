@@ -11,27 +11,13 @@ export default function PwaUpdater() {
   const [showInstallSheet, setShowInstallSheet] = useState(false);
 
   useEffect(() => {
-    // Intercept default install prompts
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      
-      // Check if user dismissed it in the last 7 days
-      const lastDismissed = localStorage.getItem('pwa-install-dismissed');
-      if (lastDismissed) {
-        const dismissedTime = parseInt(lastDismissed, 10);
-        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-        if (Date.now() - dismissedTime < sevenDaysMs) {
-          return;
-        }
-      }
-
       setDeferredPrompt(e);
-      setShowInstallSheet(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Register simple mock service worker for PWA support
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch((err) => {
         console.warn('SW registration failed:', err);
@@ -43,6 +29,26 @@ export default function PwaUpdater() {
     };
   }, []);
 
+  // Show installation sheet once logged in and install prompt is deferred
+  useEffect(() => {
+    if (!authRole || !deferredPrompt) {
+      setShowInstallSheet(false);
+      return;
+    }
+
+    // Check if dismissed in last 7 days
+    const lastDismissed = localStorage.getItem('pwa-install-dismissed');
+    if (lastDismissed) {
+      const dismissedTime = parseInt(lastDismissed, 10);
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      if (Date.now() - dismissedTime < sevenDaysMs) {
+        return;
+      }
+    }
+
+    setShowInstallSheet(true);
+  }, [authRole, deferredPrompt]);
+
   // Update manifest tag in document head when authRole changes
   useEffect(() => {
     const existingManifest = document.querySelector('link[rel="manifest"]');
@@ -50,12 +56,14 @@ export default function PwaUpdater() {
       existingManifest.remove();
     }
 
+    if (!authRole) return;
+
     const newManifest = document.createElement('link');
     newManifest.rel = 'manifest';
     
     if (authRole === 'owner') {
       newManifest.href = '/manifest-owner.webmanifest';
-    } else {
+    } else if (authRole === 'barber') {
       newManifest.href = '/manifest-barber.webmanifest';
     }
     

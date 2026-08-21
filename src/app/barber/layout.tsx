@@ -12,12 +12,22 @@ export default function BarberLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname();
   const currentProfile = useSaloonStore((state) => state.currentProfile);
   const authRole = useSaloonStore((state) => state.authRole);
+  const _hasHydrated = useSaloonStore((state) => state._hasHydrated);
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (!currentProfile || authRole !== 'barber') {
       router.replace('/login');
     }
-  }, [currentProfile, authRole, router]);
+  }, [currentProfile, authRole, _hasHydrated, router]);
+
+  if (!_hasHydrated) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-[10px] text-zinc-650 font-bold uppercase tracking-widest font-mono">
+        Authenticating...
+      </div>
+    );
+  }
 
   if (!currentProfile || authRole !== 'barber') {
     return null;

@@ -43,6 +43,8 @@ interface SaloonState {
   currentProfile: Profile | null;
   authRole: 'barber' | 'owner' | null;
   saloonName: string;
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
   
   // Actions
   login: (role: 'barber' | 'owner', identifier: string, pin?: string) => boolean;
@@ -133,6 +135,8 @@ export const useSaloonStore = create<SaloonState>()(
       currentProfile: null,
       authRole: null,
       saloonName: 'The Sterling Groom',
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       login: (role, identifier, pin) => {
         const state = get();
@@ -276,8 +280,11 @@ export const useSaloonStore = create<SaloonState>()(
     {
       name: 'saloon-mgt-pwa-storage',
       onRehydrateStorage: () => (state) => {
-        if (state && state.logs.length === 0) {
-          state.logs = seedLogs();
+        if (state) {
+          state.setHasHydrated(true);
+          if (state.logs.length === 0) {
+            state.logs = seedLogs();
+          }
         }
       }
     }
