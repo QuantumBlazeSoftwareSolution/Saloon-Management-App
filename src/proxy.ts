@@ -17,7 +17,7 @@ function safeCompare(a: string, b: string): boolean {
   return result === 0;
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Validate API key for all routes starting with /api
