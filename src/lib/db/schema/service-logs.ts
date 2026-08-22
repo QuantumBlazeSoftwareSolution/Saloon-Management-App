@@ -1,12 +1,9 @@
 import { pgTable, timestamp, uuid, real } from 'drizzle-orm/pg-core';
-import { saloonsTable } from './saloons';
 import { profilesTable } from './profiles';
 import { servicesCatalogTable } from './services-catalog';
 
 export const serviceLogsTable = pgTable('service_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
-  saloonId: uuid('saloon_id')
-    .references(() => saloonsTable.id, { onDelete: 'cascade' }),
   barberId: uuid('barber_id')
     .references(() => profilesTable.id, { onDelete: 'cascade' })
     .notNull(),

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, RotateCcw, AlertCircle, ShoppingBag } from 'lucide-react';
-import { getBarberLogsAction, deleteServiceLogAction, insertServiceLogAction } from '@/lib/actions/service-logs';
+import { getBarberLogs, deleteServiceLog, createServiceLog } from '@/lib/actions/service-logs';
 
 export default function BarberHistoryPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
@@ -17,7 +17,7 @@ export default function BarberHistoryPage() {
 
   const fetchLogs = async () => {
     if (!barberId) return;
-    const res = await getBarberLogsAction(barberId);
+    const res = await getBarberLogs(barberId);
     if (res.success && res.data) {
       setLogs(res.data);
     }
@@ -72,7 +72,7 @@ export default function BarberHistoryPage() {
     const logToDelete = logs.find(l => l.id === logId);
     if (!logToDelete) return;
 
-    const res = await deleteServiceLogAction(logId);
+    const res = await deleteServiceLog(logId);
     if (res.success) {
       setRecentlyDeleted(logToDelete);
       setShowUndo(true);
@@ -89,8 +89,7 @@ export default function BarberHistoryPage() {
 
   const handleUndo = async () => {
     if (recentlyDeleted) {
-      const res = await insertServiceLogAction({
-        saloonId: recentlyDeleted.saloonId,
+      const res = await createServiceLog({
         barberId: recentlyDeleted.barberId,
         serviceId: recentlyDeleted.serviceId,
         priceAtTime: Number(recentlyDeleted.priceAtTime),

@@ -1,10 +1,9 @@
 'use server';
 
 import { createProfile, updateProfile } from '../db/profiles/write';
-import { getProfileById, getProfilesBySaloonId, authenticateProfile } from '../db/profiles/read';
+import { getProfileById, getProfiles, authenticateProfile } from '../db/profiles/read';
 import { profilesTable, ProfileInsert } from '../db/schema/profiles';
 import { usersTable } from '../db/schema/users';
-import { saloonsTable } from '../db/schema/saloons';
 import { db } from '../db';
 import { revalidatePath } from 'next/cache';
 import { sendOtpEmail } from '../email';
@@ -129,109 +128,94 @@ export async function verifyOwnerOtpAction(email: string, code: string) {
   }
 }
 
-export async function getProfilesBySaloonIdAction(saloonId: string) {
-  try {
-    const profiles = await getProfilesBySaloonId(saloonId);
-    return { success: true, data: profiles };
-  } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to fetch profiles.' };
-  }
-}
-
 export async function getProfileByIdAction(id: string) {
+  console.log(`[getProfileByIdAction] Fetching profile: ${id}`);
   try {
     const profile = await getProfileById(id);
+    console.log(`[getProfileByIdAction] Success: found profile ${profile?.fullName}`);
     return { success: true, data: profile };
   } catch (error: any) {
+    console.error(`[getProfileByIdAction] Error: ${error.message}`);
     return { success: false, error: error.message || 'Failed to fetch profile.' };
   }
 }
 
-export async function checkAndHealSaloonAction(profileId: string) {
+export async function getAllStaff() {
+  console.log(`[getAllStaff] Fetching all staff profiles`);
   try {
-    const profile = await getProfileById(profileId);
-    if (!profile) return { success: false, error: 'Profile not found' };
-
-    if (!profile.saloonId) {
-      const existingSaloon = await db
-        .select()
-        .from(saloonsTable)
-        .where(eq(saloonsTable.ownerId, profile.id))
-        .limit(1);
-
-      let saloonId = existingSaloon[0]?.id;
-
-      if (!saloonId) {
-        const [newSaloon] = await db
-          .insert(saloonsTable)
-          .values({
-            name: `${profile.fullName}'s Saloon`,
-            commissionDefaultPct: 50,
-            ownerId: profile.id,
-          })
-          .returning();
-        saloonId = newSaloon.id;
-      }
-
-      const updatedProfile = await db
-        .update(profilesTable)
-        .set({ saloonId })
-        .where(eq(profilesTable.id, profile.id))
-        .returning();
-
-      return { success: true, profile: updatedProfile[0] };
-    }
-
-    return { success: true, profile };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
-}
-
-export async function getAllStaff(saloonId: string) {
-  console.log(`[getAllStaff] Fetching staff for saloonId: ${saloonId}`);
-  try {
-    const res = await getProfilesBySaloonIdAction(saloonId);
-    if (res.success) {
-      console.log(`[getAllStaff] Success: fetched ${res.data?.length || 0} profiles`);
-    } else {
-      console.error(`[getAllStaff] Failure: ${res.error}`);
-    }
-    return res;
+    const profiles = await getProfiles();
+    console.log(`[getAllStaff] Success: fetched ${profiles.length} profiles`);
+    return { success: true, data: profiles };
   } catch (error: any) {
     console.error(`[getAllStaff] Error: ${error.message}`);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'Failed to fetch profiles.' };
   }
 }
 
 export async function createStaff(data: ProfileInsert) {
   console.log(`[createStaff] Attempting to create staff profile: ${data.fullName}`);
   try {
-    const res = await createProfileAction(data);
-    if (res.success) {
-      console.log(`[createStaff] Success: created profile ${res.data?.id}`);
-    } else {
-      console.error(`[createStaff] Failure: ${res.error}`);
+    const finalData = { ...data };
+    
+    if (finalData.role === 'barber' && !finalData.pin) {
+      finalData.pin = Math.floor(1000 + Math.random() * 9000).toString();
     }
-    return res;
+
+    const existingUser = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.phone, finalData.phone))
+      .limit(1);
+
+    if (existingUser.length > 0) {
+      console.warn(`[createStaff] Cancelled: phone number ${finalData.phone} already registered`);
+      return { success: false, error: 'This phone number is already registered.' };
+    }
+
+    if (finalData.email) {
+      const existingEmail = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.email, finalData.email))
+        .limit(1);
+
+      if (existingEmail.length > 0) {
+        console.warn(`[createStaff] Cancelled: email address ${finalData.email} already registered`);
+        return { success: false, error: 'This email address is already registered.' };
+      }
+    }
+
+    const profile = await createProfile(finalData);
+
+    const pinToHash = finalData.pin || '1234';
+    const passwordHash = await bcrypt.hash(pinToHash, 10);
+    await db.insert(usersTable).values({
+      phone: profile.phone,
+      passwordHash,
+      role: profile.role as 'owner' | 'barber',
+      profileId: profile.id,
+      email: profile.email || null,
+    });
+
+    console.log(`[createStaff] Success: created profile ${profile.id} with credential phone ${profile.phone}`);
+    revalidatePath('/owner/staff');
+    return { success: true, data: profile };
   } catch (error: any) {
     console.error(`[createStaff] Error: ${error.message}`);
-    return { success: false, error: error.message };
+    return { success: false, error: 'Failed to create staff profile.' };
   }
 }
 
 export async function updateStaff(id: string, data: Partial<ProfileInsert>) {
   console.log(`[updateStaff] Attempting to update profile: ${id}`);
   try {
-    const res = await updateProfileAction(id, data);
-    if (res.success) {
-      console.log(`[updateStaff] Success: updated profile ${res.data?.id}`);
-    } else {
-      console.error(`[updateStaff] Failure: ${res.error}`);
-    }
-    return res;
+    const profile = await updateProfile(id, data);
+    console.log(`[updateStaff] Success: updated profile ${profile.id}`);
+    revalidatePath('/owner/staff');
+    revalidatePath('/barber/profile');
+    return { success: true, data: profile };
   } catch (error: any) {
     console.error(`[updateStaff] Error: ${error.message}`);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'Failed to update profile.' };
   }
 }

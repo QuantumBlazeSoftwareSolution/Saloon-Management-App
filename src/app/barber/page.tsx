@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, Check, Percent } from 'lucide-react';
-import { getServicesBySaloonIdAction } from '@/lib/actions/services';
-import { insertServiceLogAction, getBarberLogsAction } from '@/lib/actions/service-logs';
+import { getAllServices } from '@/lib/actions/services';
+import { createServiceLog, getBarberLogs } from '@/lib/actions/service-logs';
 
 export default function AddServicePage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
@@ -19,11 +19,11 @@ export default function AddServicePage() {
 
   const fetchDbData = async () => {
     if (!currentProfile) return;
-    const servicesRes = await getServicesBySaloonIdAction(currentProfile.saloonId, true);
+    const servicesRes = await getAllServices(true);
     if (servicesRes.success && servicesRes.data) {
       setServices(servicesRes.data);
     }
-    const logsRes = await getBarberLogsAction(currentProfile.id);
+    const logsRes = await getBarberLogs(currentProfile.id);
     if (logsRes.success && logsRes.data) {
       setLogs(logsRes.data);
     }
@@ -64,8 +64,7 @@ export default function AddServicePage() {
     const netAmount = priceAtTime - discountAmount;
     const commissionAmount = netAmount * (commissionPct / 100);
 
-    const res = await insertServiceLogAction({
-      saloonId: currentProfile.saloonId,
+    const res = await createServiceLog({
       barberId,
       serviceId: selectedServiceId,
       priceAtTime,

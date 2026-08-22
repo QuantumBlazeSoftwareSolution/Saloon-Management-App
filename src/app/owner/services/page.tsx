@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { Briefcase, Plus, Tag, DollarSign, Check, ShieldAlert } from 'lucide-react';
-import { getServicesBySaloonIdAction, createServiceAction, updateServiceAction } from '@/lib/actions/services';
+import { getAllServices, createService, updateService } from '@/lib/actions/services';
 
 export default function OwnerServicesPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
@@ -22,7 +22,7 @@ export default function OwnerServicesPage() {
 
   const fetchServices = async () => {
     if (!currentProfile) return;
-    const res = await getServicesBySaloonIdAction(currentProfile.saloonId, false);
+    const res = await getAllServices(false);
     if (res.success && res.data) {
       setServices(res.data);
     }
@@ -43,8 +43,7 @@ export default function OwnerServicesPage() {
       return;
     }
 
-    const res = await createServiceAction({
-      saloonId: currentProfile.saloonId,
+    const res = await createService({
       name,
       basePrice: price,
       active: true,
@@ -73,7 +72,7 @@ export default function OwnerServicesPage() {
     e.preventDefault();
     const price = parseFloat(editPriceStr);
     if (editingId && !isNaN(price) && price >= 0) {
-      const res = await updateServiceAction(editingId, {
+      const res = await updateService(editingId, {
         name: editName,
         basePrice: price,
         active: editActive,

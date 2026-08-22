@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
 
     const body = await request.json();
-    const { role, fullName, phone, email, password, commissionPct, saloonId } = body;
+    const { role, fullName, phone, email, password, commissionPct } = body;
 
     if (!role || !fullName || !phone || !password) {
       return NextResponse.json({ error: 'Missing role, fullName, phone, or password' }, { status: 400 });
@@ -19,9 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User phone number already registered' }, { status: 400 });
     }
 
-    
     const profile = await createProfile({
-      saloonId: saloonId || null,
       role,
       fullName,
       phone,

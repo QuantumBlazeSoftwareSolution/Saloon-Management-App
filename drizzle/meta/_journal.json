@@ -15,6 +15,13 @@
       "when": 1787407878645,
       "tag": "0001_magical_professor_monster",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787416848069,
+      "tag": "0002_melodic_machine_man",
+      "breakpoints": true
     }
   ]
 }

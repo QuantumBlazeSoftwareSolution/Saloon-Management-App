@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { CalendarDays, Landmark, TrendingUp, Users, PieChart as PieIcon, BarChart3, Award } from 'lucide-react';
-import { getServiceLogsBySaloonIdAction } from '@/lib/actions/service-logs';
-import { getProfilesBySaloonIdAction } from '@/lib/actions/profiles';
-import { getServicesBySaloonIdAction } from '@/lib/actions/services';
+import { getAllServiceLogs } from '@/lib/actions/service-logs';
+import { getAllStaff } from '@/lib/actions/profiles';
+import { getAllServices } from '@/lib/actions/services';
 
 const COLORS = ['#d4af37', '#e5a93b', '#a8a29e', '#71717a', '#3f3f46'];
 
@@ -20,15 +20,15 @@ export default function OwnerAnalyticsPage() {
 
   const fetchDbData = async () => {
     if (!currentProfile) return;
-    const logsRes = await getServiceLogsBySaloonIdAction(currentProfile.saloonId);
+    const logsRes = await getAllServiceLogs();
     if (logsRes.success && logsRes.data) {
       setLogs(logsRes.data);
     }
-    const profilesRes = await getProfilesBySaloonIdAction(currentProfile.saloonId);
+    const profilesRes = await getAllStaff();
     if (profilesRes.success && profilesRes.data) {
       setProfiles(profilesRes.data);
     }
-    const servicesRes = await getServicesBySaloonIdAction(currentProfile.saloonId, false);
+    const servicesRes = await getAllServices(false);
     if (servicesRes.success && servicesRes.data) {
       setServices(servicesRes.data);
     }

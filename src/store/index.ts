@@ -12,7 +12,6 @@ export interface Service {
 
 export interface Profile {
   id: string;
-  saloonId: string;
   fullName: string;
   phone: string;
   email?: string;
@@ -98,7 +97,6 @@ export const useSaloonStore = create<SaloonState>()(
           const newId = `p_dyn_${Date.now()}`;
           const newProfile: Profile = {
             id: newId,
-            saloonId: 'default-saloon-id',
             fullName: `Barber (${identifier})`,
             phone: identifier,
             role: 'barber',
@@ -197,7 +195,6 @@ export const useSaloonStore = create<SaloonState>()(
         const generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
         const newBarber: Profile = {
           id: `p_barber_${Date.now()}`,
-          saloonId: 'default-saloon-id',
           fullName: name,
           phone,
           role: 'barber',

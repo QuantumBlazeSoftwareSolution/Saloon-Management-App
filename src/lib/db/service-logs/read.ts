@@ -4,11 +4,10 @@ import { servicesCatalogTable } from '../schema/services-catalog';
 import { profilesTable } from '../schema/profiles';
 import { eq, and, gte } from 'drizzle-orm';
 
-export async function getServiceLogsBySaloonId(saloonId: string) {
+export async function getServiceLogs() {
   return await db
     .select({
       id: serviceLogsTable.id,
-      saloonId: serviceLogsTable.saloonId,
       barberId: serviceLogsTable.barberId,
       serviceId: serviceLogsTable.serviceId,
       priceAtTime: serviceLogsTable.priceAtTime,
@@ -23,18 +22,16 @@ export async function getServiceLogsBySaloonId(saloonId: string) {
     })
     .from(serviceLogsTable)
     .leftJoin(servicesCatalogTable, eq(serviceLogsTable.serviceId, servicesCatalogTable.id))
-    .leftJoin(profilesTable, eq(serviceLogsTable.barberId, profilesTable.id))
-    .where(eq(serviceLogsTable.saloonId, saloonId));
+    .leftJoin(profilesTable, eq(serviceLogsTable.barberId, profilesTable.id));
 }
 
-export async function getTodayServiceLogs(saloonId: string) {
+export async function getTodayServiceLogs() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   return await db
     .select({
       id: serviceLogsTable.id,
-      saloonId: serviceLogsTable.saloonId,
       barberId: serviceLogsTable.barberId,
       serviceId: serviceLogsTable.serviceId,
       priceAtTime: serviceLogsTable.priceAtTime,
@@ -50,19 +47,13 @@ export async function getTodayServiceLogs(saloonId: string) {
     .from(serviceLogsTable)
     .leftJoin(servicesCatalogTable, eq(serviceLogsTable.serviceId, servicesCatalogTable.id))
     .leftJoin(profilesTable, eq(serviceLogsTable.barberId, profilesTable.id))
-    .where(
-      and(
-        eq(serviceLogsTable.saloonId, saloonId),
-        gte(serviceLogsTable.createdAt, today)
-      )
-    );
+    .where(gte(serviceLogsTable.createdAt, today));
 }
 
 export async function getBarberLogs(barberId: string) {
   return await db
     .select({
       id: serviceLogsTable.id,
-      saloonId: serviceLogsTable.saloonId,
       barberId: serviceLogsTable.barberId,
       serviceId: serviceLogsTable.serviceId,
       priceAtTime: serviceLogsTable.priceAtTime,

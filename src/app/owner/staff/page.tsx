@@ -25,7 +25,7 @@ export default function OwnerStaffPage() {
 
   const fetchProfiles = async () => {
     if (!currentProfile) return;
-    const res = await getAllStaff(currentProfile.saloonId);
+    const res = await getAllStaff();
     if (res.success && res.data) {
       setProfiles(res.data);
     }
@@ -71,7 +71,6 @@ export default function OwnerStaffPage() {
 
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
     const res = await createStaff({
-      saloonId: currentProfile.saloonId,
       role: 'barber',
       fullName: name,
       phone,

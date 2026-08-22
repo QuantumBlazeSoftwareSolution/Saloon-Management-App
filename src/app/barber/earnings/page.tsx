@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { DollarSign, Award, CalendarDays, BarChart3 } from 'lucide-react';
-import { getBarberLogsAction } from '@/lib/actions/service-logs';
+import { getBarberLogs } from '@/lib/actions/service-logs';
 
 export default function BarberEarningsPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
@@ -15,7 +15,7 @@ export default function BarberEarningsPage() {
   useEffect(() => {
     const fetchLogs = async () => {
       if (!barberId) return;
-      const res = await getBarberLogsAction(barberId);
+      const res = await getBarberLogs(barberId);
       if (res.success && res.data) {
         setLogs(res.data);
       }

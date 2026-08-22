@@ -4,12 +4,11 @@ import { useEffect, useState } from 'react';
 import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, BarChart, User, Clock, Scissors, Zap } from 'lucide-react';
-import { getSaloonByIdAction } from '@/lib/actions/saloons';
-import { getServiceLogsBySaloonIdAction } from '@/lib/actions/service-logs';
+import { getAllServiceLogs } from '@/lib/actions/service-logs';
 
 export default function OwnerTodayPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
-  const [saloonName, setSaloonName] = useState('Sterling Groom');
+  const [saloonName] = useState('The Sterling Groom');
   const [logs, setLogs] = useState<any[]>([]);
   
   
@@ -19,14 +18,7 @@ export default function OwnerTodayPage() {
   const fetchDbData = async () => {
     if (!currentProfile) return;
     
-    
-    const saloonRes = await getSaloonByIdAction(currentProfile.saloonId);
-    if (saloonRes.success && saloonRes.data) {
-      setSaloonName(saloonRes.data.name);
-    }
-    
-    
-    const logsRes = await getServiceLogsBySaloonIdAction(currentProfile.saloonId);
+    const logsRes = await getAllServiceLogs();
     if (logsRes.success && logsRes.data) {
       setLogs(logsRes.data);
     }

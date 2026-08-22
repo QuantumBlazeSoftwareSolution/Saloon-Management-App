@@ -11,11 +11,10 @@ export async function getProfileById(id: string) {
   return result[0] || null;
 }
 
-export async function getProfilesBySaloonId(saloonId: string) {
+export async function getProfiles() {
   return await db
     .select()
-    .from(profilesTable)
-    .where(eq(profilesTable.saloonId, saloonId));
+    .from(profilesTable);
 }
 
 export async function authenticateProfile(role: 'barber' | 'owner', identifier: string, pin?: string) {
