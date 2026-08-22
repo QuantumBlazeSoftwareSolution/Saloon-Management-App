@@ -10,7 +10,12 @@ export default function PwaUpdater() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallSheet, setShowInstallSheet] = useState(false);
 
+  const [isStandalone, setIsStandalone] = useState(false);
+
   useEffect(() => {
+    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
+    setIsStandalone(!!isStandaloneMode);
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -31,7 +36,7 @@ export default function PwaUpdater() {
 
   
   useEffect(() => {
-    if (!authRole || !deferredPrompt) {
+    if (!authRole || !deferredPrompt || isStandalone) {
       setShowInstallSheet(false);
       return;
     }
@@ -47,7 +52,7 @@ export default function PwaUpdater() {
     }
 
     setShowInstallSheet(true);
-  }, [authRole, deferredPrompt]);
+  }, [authRole, deferredPrompt, isStandalone]);
 
   
   useEffect(() => {
@@ -88,7 +93,7 @@ export default function PwaUpdater() {
 
   return (
     <AnimatePresence>
-      {showInstallSheet && deferredPrompt && (
+      {showInstallSheet && deferredPrompt && !isStandalone && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm">
           <motion.div
             initial={{ y: '100%' }}
@@ -141,6 +146,26 @@ export default function PwaUpdater() {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {authRole && deferredPrompt && !isStandalone && !showInstallSheet && (
+        <motion.button
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0, opacity: 0 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setShowInstallSheet(true)}
+          className={`fixed bottom-20 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full shadow-lg border cursor-pointer ${
+            isBarber 
+              ? 'bg-amber-500 border-amber-400 text-black' 
+              : 'bg-yellow-500 border-yellow-400 text-black'
+          }`}
+          title="Install App"
+        >
+          <span className="absolute -inset-1 rounded-full bg-inherit opacity-20 animate-ping" />
+          <Download className="h-5 w-5" />
+        </motion.button>
       )}
     </AnimatePresence>
   );
