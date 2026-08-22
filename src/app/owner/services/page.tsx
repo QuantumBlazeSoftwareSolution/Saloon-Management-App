@@ -239,7 +239,8 @@ export default function OwnerServicesPage() {
               return (
                 <div
                   key={service.id}
-                  className="flex items-center justify-between border border-zinc-900 bg-zinc-900/30 rounded-2xl p-4 transition-all hover:bg-zinc-900/40"
+                  onClick={() => handleStartEdit(service)}
+                  className="flex items-center justify-between border border-zinc-900 bg-zinc-900/30 rounded-2xl p-4 transition-all hover:bg-zinc-900/40 cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center">
@@ -257,13 +258,6 @@ export default function OwnerServicesPage() {
                       </span>
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => handleStartEdit(service)}
-                    className="py-1.5 px-3 rounded-lg border border-zinc-850 bg-zinc-950 text-zinc-400 text-xs font-bold hover:bg-zinc-900 hover:text-white transition-all active:scale-95 cursor-pointer"
-                  >
-                    Edit
-                  </button>
                 </div>
               );
             })}
