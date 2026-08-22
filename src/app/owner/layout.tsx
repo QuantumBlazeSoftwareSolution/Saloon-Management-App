@@ -103,7 +103,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         </div>
 
         <div className="text-zinc-600 text-xs font-semibold">
-          Signed in as {currentProfile.full_name}
+          Signed in as {currentProfile.fullName}
         </div>
       </aside>
 

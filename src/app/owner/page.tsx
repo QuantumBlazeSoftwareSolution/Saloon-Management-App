@@ -1,30 +1,55 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSaloonStore, ServiceLog } from '@/store';
+import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, BarChart, User, Clock, Scissors, Zap } from 'lucide-react';
+import { getSaloonByIdAction } from '@/lib/actions/saloons';
+import { getServiceLogsBySaloonIdAction } from '@/lib/actions/service-logs';
 
 export default function OwnerTodayPage() {
-  const saloonName = useSaloonStore((state) => state.saloonName);
-  const logs = useSaloonStore((state) => state.logs);
+  const currentProfile = useSaloonStore((state) => state.currentProfile);
+  const [saloonName, setSaloonName] = useState('Sterling Groom');
+  const [logs, setLogs] = useState<any[]>([]);
   
   // Local state to detect new incoming items for highlight flashes
-  const [prevLogsCount, setPrevLogsCount] = useState(logs.length);
+  const [prevLogsCount, setPrevLogsCount] = useState(0);
   const [newLogIds, setNewLogIds] = useState<string[]>([]);
+
+  const fetchDbData = async () => {
+    if (!currentProfile) return;
+    
+    // Fetch saloon details
+    const saloonRes = await getSaloonByIdAction(currentProfile.saloonId);
+    if (saloonRes.success && saloonRes.data) {
+      setSaloonName(saloonRes.data.name);
+    }
+    
+    // Fetch logs
+    const logsRes = await getServiceLogsBySaloonIdAction(currentProfile.saloonId);
+    if (logsRes.success && logsRes.data) {
+      setLogs(logsRes.data);
+    }
+  };
+
+  useEffect(() => {
+    if (currentProfile) {
+      fetchDbData();
+    }
+  }, [currentProfile]);
 
   // Filter logs for today
   const getTodayLogs = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return logs.filter((l) => new Date(l.created_at) >= today);
+    return logs.filter((l) => new Date(l.createdAt) >= today);
   };
 
   const todayLogs = getTodayLogs();
   
   // Calculate stats
   const totalRevenue = todayLogs.reduce((sum, l) => {
-    const discountedPrice = l.price_at_time * (1 - l.discount_pct / 100);
+    const discountedPrice = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
     return sum + discountedPrice;
   }, 0);
 
@@ -34,11 +59,11 @@ export default function OwnerTodayPage() {
   // Find best performing barber today
   const barberPerformance: { [key: string]: { name: string; total: number } } = {};
   todayLogs.forEach((l) => {
-    const revenue = l.price_at_time * (1 - l.discount_pct / 100);
-    if (!barberPerformance[l.barber_id]) {
-      barberPerformance[l.barber_id] = { name: l.barber_name, total: 0 };
+    const revenue = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
+    if (!barberPerformance[l.barberId]) {
+      barberPerformance[l.barberId] = { name: l.barberName || 'Unknown Barber', total: 0 };
     }
-    barberPerformance[l.barber_id].total += revenue;
+    barberPerformance[l.barberId].total += revenue;
   });
 
   let topBarberName = 'No sales';
@@ -52,7 +77,7 @@ export default function OwnerTodayPage() {
 
   // Sort logs to show latest on top
   const sortedLogs = [...logs].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   // Monitor incoming logs
@@ -144,8 +169,8 @@ export default function OwnerTodayPage() {
         <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
           <AnimatePresence initial={false}>
             {sortedLogs.slice(0, 10).map((log) => {
-              const price = log.price_at_time * (1 - log.discount_pct / 100);
-              const formattedTime = new Date(log.created_at).toLocaleTimeString('en-US', {
+              const price = Number(log.priceAtTime) * (1 - Number(log.discountPct) / 100);
+              const formattedTime = new Date(log.createdAt).toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
@@ -172,10 +197,10 @@ export default function OwnerTodayPage() {
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="font-bold text-sm text-white truncate pr-2">
-                        {log.service_name}
+                        {log.serviceName}
                       </span>
                       <span className="text-[10px] text-zinc-500 font-semibold">
-                        Logged by <span className="text-zinc-300 font-bold">{log.barber_name}</span>
+                        Logged by <span className="text-zinc-300 font-bold">{log.barberName || 'Unknown Barber'}</span>
                       </span>
                     </div>
                   </div>

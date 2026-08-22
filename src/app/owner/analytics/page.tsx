@@ -1,18 +1,44 @@
 'use client';
 
-import { useState } from 'react';
-import { useSaloonStore, ServiceLog } from '@/store';
+import { useState, useEffect } from 'react';
+import { useSaloonStore } from '@/store';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { CalendarDays, Landmark, TrendingUp, Users, PieChart as PieIcon, BarChart3, Award } from 'lucide-react';
+import { getServiceLogsBySaloonIdAction } from '@/lib/actions/service-logs';
+import { getProfilesBySaloonIdAction } from '@/lib/actions/profiles';
+import { getServicesBySaloonIdAction } from '@/lib/actions/services';
 
 const COLORS = ['#d4af37', '#e5a93b', '#a8a29e', '#71717a', '#3f3f46'];
 
 export default function OwnerAnalyticsPage() {
-  const logs = useSaloonStore((state) => state.logs);
-  const profiles = useSaloonStore((state) => state.profiles);
-  const services = useSaloonStore((state) => state.services);
+  const currentProfile = useSaloonStore((state) => state.currentProfile);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
 
   const [dateFilter, setDateFilter] = useState<'week' | 'month' | 'year'>('week');
+
+  const fetchDbData = async () => {
+    if (!currentProfile) return;
+    const logsRes = await getServiceLogsBySaloonIdAction(currentProfile.saloonId);
+    if (logsRes.success && logsRes.data) {
+      setLogs(logsRes.data);
+    }
+    const profilesRes = await getProfilesBySaloonIdAction(currentProfile.saloonId);
+    if (profilesRes.success && profilesRes.data) {
+      setProfiles(profilesRes.data);
+    }
+    const servicesRes = await getServicesBySaloonIdAction(currentProfile.saloonId, false);
+    if (servicesRes.success && servicesRes.data) {
+      setServices(servicesRes.data);
+    }
+  };
+
+  useEffect(() => {
+    if (currentProfile) {
+      fetchDbData();
+    }
+  }, [currentProfile, dateFilter]);
 
   // Filter logs based on selection
   const getFilteredLogs = () => {
@@ -27,18 +53,18 @@ export default function OwnerAnalyticsPage() {
       filterDate.setFullYear(now.getFullYear() - 1);
     }
 
-    return logs.filter((l) => new Date(l.created_at) >= filterDate);
+    return logs.filter((l) => new Date(l.createdAt) >= filterDate);
   };
 
   const filteredLogs = getFilteredLogs();
 
   // Metrics math
   const totalRevenue = filteredLogs.reduce((sum, l) => {
-    const discountedPrice = l.price_at_time * (1 - l.discount_pct / 100);
+    const discountedPrice = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
     return sum + discountedPrice;
   }, 0);
 
-  const totalCommission = filteredLogs.reduce((sum, l) => sum + l.commission_amount, 0);
+  const totalCommission = filteredLogs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
   const netEarnings = totalRevenue - totalCommission;
 
   // 1. Group by Day for Bar & Area Chart
@@ -54,9 +80,9 @@ export default function OwnerAnalyticsPage() {
         groups[dayKey] = 0;
       }
       filteredLogs.forEach((l) => {
-        const dayKey = new Date(l.created_at).toLocaleDateString('en-US', { weekday: 'short' });
+        const dayKey = new Date(l.createdAt).toLocaleDateString('en-US', { weekday: 'short' });
         if (dayKey in groups) {
-          const rev = l.price_at_time * (1 - l.discount_pct / 100);
+          const rev = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
           groups[dayKey] += rev;
         }
       });
@@ -68,7 +94,7 @@ export default function OwnerAnalyticsPage() {
         groups[dayKey] = 0;
       }
       filteredLogs.forEach((l) => {
-        const d = new Date(l.created_at);
+        const d = new Date(l.createdAt);
         // Find nearest group step (step of 3 days)
         const dayKey = `${d.getMonth() + 1}/${d.getDate()}`;
         // fallback match closest key
@@ -84,7 +110,7 @@ export default function OwnerAnalyticsPage() {
             matchedKey = k;
           }
         });
-        const rev = l.price_at_time * (1 - l.discount_pct / 100);
+        const rev = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
         groups[matchedKey] += rev;
       });
     } else {
@@ -96,9 +122,9 @@ export default function OwnerAnalyticsPage() {
         groups[dayKey] = 0;
       }
       filteredLogs.forEach((l) => {
-        const dayKey = new Date(l.created_at).toLocaleDateString('en-US', { month: 'short' });
+        const dayKey = new Date(l.createdAt).toLocaleDateString('en-US', { month: 'short' });
         if (dayKey in groups) {
-          const rev = l.price_at_time * (1 - l.discount_pct / 100);
+          const rev = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
           groups[dayKey] += rev;
         }
       });
@@ -125,8 +151,9 @@ export default function OwnerAnalyticsPage() {
   // 2. Pie chart data: Split by service
   const serviceDistributionMap: { [key: string]: number } = {};
   filteredLogs.forEach((l) => {
-    const rev = l.price_at_time * (1 - l.discount_pct / 100);
-    serviceDistributionMap[l.service_name] = (serviceDistributionMap[l.service_name] || 0) + rev;
+    const rev = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
+    const sName = l.serviceName || 'Unknown Service';
+    serviceDistributionMap[sName] = (serviceDistributionMap[sName] || 0) + rev;
   });
 
   const pieData = Object.entries(serviceDistributionMap)
@@ -140,17 +167,18 @@ export default function OwnerAnalyticsPage() {
   // 3. Leaderboard for Barbers
   const barberLeaderboardMap: { [key: string]: { name: string; total: number; servicesCount: number } } = {};
   filteredLogs.forEach((l) => {
-    const rev = l.price_at_time * (1 - l.discount_pct / 100);
-    if (!barberLeaderboardMap[l.barber_id]) {
-      const p = profiles.find(profile => profile.id === l.barber_id);
-      barberLeaderboardMap[l.barber_id] = {
-        name: l.barber_name,
+    const rev = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
+    const bId = l.barberId;
+    const bName = l.barberName || 'Unknown Barber';
+    if (!barberLeaderboardMap[bId]) {
+      barberLeaderboardMap[bId] = {
+        name: bName,
         total: 0,
         servicesCount: 0
       };
     }
-    barberLeaderboardMap[l.barber_id].total += rev;
-    barberLeaderboardMap[l.barber_id].servicesCount += 1;
+    barberLeaderboardMap[bId].total += rev;
+    barberLeaderboardMap[bId].servicesCount += 1;
   });
 
   const leaderboard = Object.entries(barberLeaderboardMap)

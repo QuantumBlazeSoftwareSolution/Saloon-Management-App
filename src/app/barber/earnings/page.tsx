@@ -1,44 +1,54 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { DollarSign, Award, CalendarDays, BarChart3 } from 'lucide-react';
+import { getBarberLogsAction } from '@/lib/actions/service-logs';
 
 export default function BarberEarningsPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
-  const logs = useSaloonStore((state) => state.logs);
+  const [logs, setLogs] = useState<any[]>([]);
 
   const barberId = currentProfile?.id || '';
 
-  // Get barber's logs sorted by date
-  const barberLogs = logs.filter((l) => l.barber_id === barberId);
+  useEffect(() => {
+    const fetchLogs = async () => {
+      if (!barberId) return;
+      const res = await getBarberLogsAction(barberId);
+      if (res.success && res.data) {
+        setLogs(res.data);
+      }
+    };
+    fetchLogs();
+  }, [barberId]);
 
   // Math totals
-  const totalCommission = barberLogs.reduce((sum, l) => sum + l.commission_amount, 0);
-  const totalServicesCount = barberLogs.length;
+  const totalCommission = logs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
+  const totalServicesCount = logs.length;
 
   // Weekly filter (past 7 days)
   const now = new Date();
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(now.getDate() - 7);
-  const weeklyLogs = barberLogs.filter(l => new Date(l.created_at) >= sevenDaysAgo);
-  const weeklyCommission = weeklyLogs.reduce((sum, l) => sum + l.commission_amount, 0);
+  const weeklyLogs = logs.filter(l => new Date(l.createdAt) >= sevenDaysAgo);
+  const weeklyCommission = weeklyLogs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
 
   // Monthly filter (past 30 days)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(now.getDate() - 30);
-  const monthlyLogs = barberLogs.filter(l => new Date(l.created_at) >= thirtyDaysAgo);
-  const monthlyCommission = monthlyLogs.reduce((sum, l) => sum + l.commission_amount, 0);
+  const monthlyLogs = logs.filter(l => new Date(l.createdAt) >= thirtyDaysAgo);
+  const monthlyCommission = monthlyLogs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
 
   // Build chart dataset for past 7 days
   const chartData = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(now.getDate() - (6 - i));
     const dayStr = d.toLocaleDateString('en-US', { weekday: 'short' });
-    const dayLogs = barberLogs.filter(
-      (l) => new Date(l.created_at).toDateString() === d.toDateString()
+    const dayLogs = logs.filter(
+      (l) => new Date(l.createdAt).toDateString() === d.toDateString()
     );
-    const earnings = dayLogs.reduce((sum, l) => sum + l.commission_amount, 0);
+    const earnings = dayLogs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
 
     return {
       day: dayStr,

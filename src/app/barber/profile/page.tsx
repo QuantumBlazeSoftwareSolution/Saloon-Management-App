@@ -15,7 +15,7 @@ export default function BarberProfilePage() {
     router.replace('/login');
   };
 
-  const initialLetter = currentProfile?.full_name?.charAt(0) || 'B';
+  const initialLetter = currentProfile?.fullName?.charAt(0) || 'B';
 
   return (
     <div className="space-y-6">
@@ -27,10 +27,10 @@ export default function BarberProfilePage() {
 
       {/* Account Info card */}
       <div className="border border-zinc-900 bg-zinc-900/30 rounded-2xl p-6 flex flex-col items-center text-center space-y-4">
-        {currentProfile?.avatar_url ? (
+        {currentProfile?.avatarUrl ? (
           <img 
-            src={currentProfile.avatar_url} 
-            alt={currentProfile.full_name}
+            src={currentProfile.avatarUrl} 
+            alt={currentProfile.fullName}
             className="h-20 w-20 rounded-full border-2 border-amber-500 object-cover"
           />
         ) : (
@@ -40,7 +40,7 @@ export default function BarberProfilePage() {
         )}
         
         <div>
-          <h3 className="text-lg font-bold text-white leading-tight">{currentProfile?.full_name}</h3>
+          <h3 className="text-lg font-bold text-white leading-tight">{currentProfile?.fullName}</h3>
           <span className="inline-block mt-1 text-[10px] uppercase font-bold tracking-widest text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">
             Staff Barber
           </span>
@@ -61,7 +61,7 @@ export default function BarberProfilePage() {
           <Landmark className="h-4 w-4 text-zinc-500" />
           <div className="flex-1">
             <span className="block text-[10px] text-zinc-500 font-bold uppercase tracking-wider leading-none">Commission Split</span>
-            <span className="text-sm font-semibold text-zinc-300 mt-1 block">{currentProfile?.commission_pct}% of client ticket</span>
+            <span className="text-sm font-semibold text-zinc-300 mt-1 block">{currentProfile?.commissionPct}% of client ticket</span>
           </div>
         </div>
 

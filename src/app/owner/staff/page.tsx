@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { useSaloonStore, Profile } from '@/store';
+import { useState, useEffect } from 'react';
+import { useSaloonStore } from '@/store';
 import { Users, UserPlus, Phone, Landmark, Check, ShieldAlert, Lock, Copy } from 'lucide-react';
+import { getProfilesBySaloonIdAction, createProfileAction, updateProfileAction } from '@/lib/actions/profiles';
 
 export default function OwnerStaffPage() {
-  const profiles = useSaloonStore((state) => state.profiles);
-  const addBarber = useSaloonStore((state) => state.addBarber);
-  const updateBarber = useSaloonStore((state) => state.updateBarber);
+  const currentProfile = useSaloonStore((state) => state.currentProfile);
+  const [profiles, setProfiles] = useState<any[]>([]);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -27,11 +27,25 @@ export default function OwnerStaffPage() {
   const [editActive, setEditActive] = useState(true);
   const [editPin, setEditPin] = useState('');
 
+  const fetchProfiles = async () => {
+    if (!currentProfile) return;
+    const res = await getProfilesBySaloonIdAction(currentProfile.saloonId);
+    if (res.success && res.data) {
+      setProfiles(res.data);
+    }
+  };
+
+  useEffect(() => {
+    if (currentProfile) {
+      fetchProfiles();
+    }
+  }, [currentProfile]);
+
   const barbers = profiles.filter((p) => p.role === 'barber');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone) {
+    if (!name || !phone || !currentProfile) {
       setError('Please fill in name and phone number');
       return;
     }
@@ -42,37 +56,59 @@ export default function OwnerStaffPage() {
       return;
     }
 
-    const pin = addBarber(name, phone, commissionPct);
-    setNewBarberName(name);
-    setNewBarberPin(pin);
-    setSuccess('Barber added successfully!');
-    
-    setName('');
-    setPhone('');
-    setCommissionPct(50);
-    setError('');
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    const res = await createProfileAction({
+      saloonId: currentProfile.saloonId,
+      role: 'barber',
+      fullName: name,
+      phone,
+      commissionPct,
+      pin,
+      active: true,
+    });
+
+    if (res.success) {
+      setNewBarberName(name);
+      setNewBarberPin(pin);
+      setSuccess('Barber added successfully!');
+      setName('');
+      setPhone('');
+      setCommissionPct(50);
+      setError('');
+      await fetchProfiles();
+    } else {
+      setError(res.error || 'Failed to add barber');
+    }
   };
 
-  const handleStartEdit = (b: Profile) => {
+  const handleStartEdit = (b: any) => {
     setEditingId(b.id);
-    setEditName(b.full_name);
+    setEditName(b.fullName);
     setEditPhone(b.phone);
-    setEditCommissionPct(b.commission_pct);
+    setEditCommissionPct(b.commissionPct);
     setEditActive(b.active);
     setEditPin(b.pin || '');
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingId) {
-      updateBarber(editingId, editName, editPhone, editCommissionPct, editActive);
-      // Update PIN optionally in Zustand state
-      const state = useSaloonStore.getState();
-      state.profiles = state.profiles.map(p => p.id === editingId ? { ...p, pin: editPin } : p);
+      const res = await updateProfileAction(editingId, {
+        fullName: editName,
+        phone: editPhone,
+        commissionPct: editCommissionPct,
+        active: editActive,
+        pin: editPin || null,
+      });
       
-      setEditingId(null);
-      setSuccess('Barber settings saved!');
-      setTimeout(() => setSuccess(''), 2000);
+      if (res.success) {
+        setEditingId(null);
+        setSuccess('Barber settings saved!');
+        await fetchProfiles();
+        setTimeout(() => setSuccess(''), 2000);
+      } else {
+        setError(res.error || 'Failed to update barber');
+      }
     }
   };
 
@@ -302,11 +338,11 @@ export default function OwnerStaffPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-sm text-yellow-500 font-display">
-                      {barber.full_name.charAt(0)}
+                      {barber.fullName.charAt(0)}
                     </div>
                     <div className="flex flex-col">
                       <span className="font-bold text-sm text-white flex items-center gap-2">
-                        {barber.full_name}
+                        {barber.fullName}
                         {!barber.active && (
                           <span className="text-[8px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-black">Inactive</span>
                         )}
@@ -316,7 +352,7 @@ export default function OwnerStaffPage() {
                           <Phone className="h-3 w-3 text-zinc-650" /> {barber.phone}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Landmark className="h-3 w-3 text-zinc-650" /> {barber.commission_pct}%
+                          <Landmark className="h-3 w-3 text-zinc-650" /> {barber.commissionPct}%
                         </span>
                         <span className="flex items-center gap-1 text-yellow-550">
                           <Lock className="h-3 w-3 text-yellow-600/70" /> PIN: <span className="font-bold text-yellow-500">{barber.pin || 'None'}</span>

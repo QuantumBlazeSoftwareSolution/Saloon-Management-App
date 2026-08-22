@@ -1,33 +1,44 @@
 'use client';
 
-import { useState } from 'react';
-import { useSaloonStore, ServiceLog } from '@/store';
+import { useState, useEffect } from 'react';
+import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, RotateCcw, AlertCircle, ShoppingBag } from 'lucide-react';
+import { getBarberLogsAction, deleteServiceLogAction, insertServiceLogAction } from '@/lib/actions/service-logs';
 
 export default function BarberHistoryPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
-  const logs = useSaloonStore((state) => state.logs);
-  const deleteLog = useSaloonStore((state) => state.deleteLog);
-  const restoreLog = useSaloonStore((state) => state.restoreLog);
-
-  const [recentlyDeleted, setRecentlyDeleted] = useState<ServiceLog | null>(null);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [recentlyDeleted, setRecentlyDeleted] = useState<any | null>(null);
   const [showUndo, setShowUndo] = useState(false);
   const [undoTimeoutId, setUndoTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const barberId = currentProfile?.id || '';
 
+  const fetchLogs = async () => {
+    if (!barberId) return;
+    const res = await getBarberLogsAction(barberId);
+    if (res.success && res.data) {
+      setLogs(res.data);
+    }
+  };
+
+  useEffect(() => {
+    if (barberId) {
+      fetchLogs();
+    }
+  }, [barberId]);
+
   // Filter logs for this barber and sort latest first
-  const barberLogs = logs
-    .filter((l) => l.barber_id === barberId)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const barberLogs = [...logs]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Group logs by day
-  const groupLogsByDay = (logsList: ServiceLog[]) => {
-    const groups: { [key: string]: ServiceLog[] } = {};
+  const groupLogsByDay = (logsList: any[]) => {
+    const groups: { [key: string]: any[] } = {};
     
     logsList.forEach((log) => {
-      const date = new Date(log.created_at);
+      const date = new Date(log.createdAt);
       const today = new Date();
       const yesterday = new Date();
       yesterday.setDate(today.getDate() - 1);
@@ -52,16 +63,20 @@ export default function BarberHistoryPage() {
 
   const grouped = groupLogsByDay(barberLogs);
 
-  const handleDelete = (logId: string) => {
+  const handleDelete = async (logId: string) => {
     // Clear any pending undo timeouts
     if (undoTimeoutId) {
       clearTimeout(undoTimeoutId);
     }
 
-    const deleted = deleteLog(logId);
-    if (deleted) {
-      setRecentlyDeleted(deleted);
+    const logToDelete = logs.find(l => l.id === logId);
+    if (!logToDelete) return;
+
+    const res = await deleteServiceLogAction(logId);
+    if (res.success) {
+      setRecentlyDeleted(logToDelete);
       setShowUndo(true);
+      await fetchLogs();
 
       const timeout = setTimeout(() => {
         setShowUndo(false);
@@ -72,13 +87,26 @@ export default function BarberHistoryPage() {
     }
   };
 
-  const handleUndo = () => {
+  const handleUndo = async () => {
     if (recentlyDeleted) {
-      restoreLog(recentlyDeleted);
-      setShowUndo(false);
-      setRecentlyDeleted(null);
-      if (undoTimeoutId) {
-        clearTimeout(undoTimeoutId);
+      const res = await insertServiceLogAction({
+        saloonId: recentlyDeleted.saloonId,
+        barberId: recentlyDeleted.barberId,
+        serviceId: recentlyDeleted.serviceId,
+        priceAtTime: Number(recentlyDeleted.priceAtTime),
+        discountPct: Number(recentlyDeleted.discountPct),
+        commissionPct: Number(recentlyDeleted.commissionPct),
+        commissionAmount: Number(recentlyDeleted.commissionAmount),
+        netAmount: Number(recentlyDeleted.netAmount),
+      });
+
+      if (res.success) {
+        setShowUndo(false);
+        setRecentlyDeleted(null);
+        await fetchLogs();
+        if (undoTimeoutId) {
+          clearTimeout(undoTimeoutId);
+        }
       }
     }
   };
@@ -112,7 +140,7 @@ export default function BarberHistoryPage() {
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-white">Service Cancelled</span>
                 <span className="text-[10px] text-zinc-500 font-mono truncate max-w-[160px]">
-                  {recentlyDeleted.service_name}
+                  {recentlyDeleted.serviceName}
                 </span>
               </div>
             </div>
@@ -146,14 +174,14 @@ export default function BarberHistoryPage() {
               
               <div className="space-y-2">
                 <AnimatePresence initial={false}>
-                  {dayLogs.map((log) => {
-                    const price = log.price_at_time * (1 - log.discount_pct / 100);
-                    const formattedTime = new Date(log.created_at).toLocaleTimeString('en-US', {
+                   {dayLogs.map((log) => {
+                    const price = log.priceAtTime * (1 - log.discountPct / 100);
+                    const formattedTime = new Date(log.createdAt).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: true,
                     });
-                    const deletable = isDeletable(log.created_at);
+                    const deletable = isDeletable(log.createdAt);
 
                     return (
                       <motion.div
@@ -165,12 +193,12 @@ export default function BarberHistoryPage() {
                       >
                         <div className="flex flex-col gap-1 min-w-0">
                           <span className="font-bold text-sm text-white truncate pr-2">
-                            {log.service_name}
+                            {log.serviceName}
                           </span>
                           <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-semibold font-mono">
                             <span>{formattedTime}</span>
-                            {log.discount_pct > 0 && (
-                              <span className="text-amber-500">({log.discount_pct}% Off)</span>
+                            {log.discountPct > 0 && (
+                              <span className="text-amber-500">({log.discountPct}% Off)</span>
                             )}
                           </div>
                         </div>
@@ -181,7 +209,7 @@ export default function BarberHistoryPage() {
                               Rs. {price.toFixed(2)}
                             </span>
                             <span className="text-[10px] font-black text-amber-500 font-mono">
-                              +Rs. {log.commission_amount.toFixed(2)}
+                              +Rs. {Number(log.commissionAmount).toFixed(2)}
                             </span>
                           </div>
 

@@ -3,8 +3,11 @@
 import { createProfile, updateProfile } from '../db/profiles/write';
 import { getProfileById, getProfilesBySaloonId, authenticateProfile } from '../db/profiles/read';
 import { ProfileInsert } from '../db/schema/profiles';
+import { usersTable } from '../db/schema/users';
+import { db } from '../db';
 import { revalidatePath } from 'next/cache';
 import { sendOtpEmail } from '../email';
+import bcrypt from 'bcryptjs';
 
 // Temporary in-memory OTP store for owners
 const ownerOtpCache = new Map<string, { code: string; expires: number }>();
@@ -20,6 +23,18 @@ export async function createProfileAction(data: ProfileInsert) {
     }
 
     const profile = await createProfile(finalData);
+
+    // Create corresponding user credentials record
+    const pinToHash = finalData.pin || '1234';
+    const passwordHash = await bcrypt.hash(pinToHash, 10);
+    await db.insert(usersTable).values({
+      phone: profile.phone,
+      passwordHash,
+      role: profile.role as 'owner' | 'barber',
+      profileId: profile.id,
+      email: profile.email || null,
+    });
+
     revalidatePath('/owner/staff');
     return { success: true, data: profile };
   } catch (error: any) {

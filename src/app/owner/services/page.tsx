@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { useSaloonStore, Service } from '@/store';
+import { useState, useEffect } from 'react';
+import { useSaloonStore } from '@/store';
 import { Briefcase, Plus, Tag, DollarSign, Check, ShieldAlert } from 'lucide-react';
+import { getServicesBySaloonIdAction, createServiceAction, updateServiceAction } from '@/lib/actions/services';
 
 export default function OwnerServicesPage() {
-  const services = useSaloonStore((state) => state.services);
-  const addService = useSaloonStore((state) => state.addService);
-  const updateService = useSaloonStore((state) => state.updateService);
+  const currentProfile = useSaloonStore((state) => state.currentProfile);
+  const [services, setServices] = useState<any[]>([]);
 
   const [name, setName] = useState('');
   const [priceStr, setPriceStr] = useState('');
@@ -20,39 +20,73 @@ export default function OwnerServicesPage() {
   const [editPriceStr, setEditPriceStr] = useState('');
   const [editActive, setEditActive] = useState(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const fetchServices = async () => {
+    if (!currentProfile) return;
+    const res = await getServicesBySaloonIdAction(currentProfile.saloonId, false);
+    if (res.success && res.data) {
+      setServices(res.data);
+    }
+  };
+
+  useEffect(() => {
+    if (currentProfile) {
+      fetchServices();
+    }
+  }, [currentProfile]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const price = parseFloat(priceStr);
     
-    if (!name || isNaN(price) || price < 0) {
+    if (!name || isNaN(price) || price < 0 || !currentProfile) {
       setError('Please enter a valid service name and numeric price.');
       return;
     }
 
-    addService(name, price);
-    setSuccess('Service catalog updated!');
-    setName('');
-    setPriceStr('');
-    setError('');
+    const res = await createServiceAction({
+      saloonId: currentProfile.saloonId,
+      name,
+      basePrice: price,
+      active: true,
+    });
 
-    setTimeout(() => setSuccess(''), 2000);
+    if (res.success) {
+      setSuccess('Service catalog updated!');
+      setName('');
+      setPriceStr('');
+      setError('');
+      await fetchServices();
+      setTimeout(() => setSuccess(''), 2000);
+    } else {
+      setError(res.error || 'Failed to create service');
+    }
   };
 
-  const handleStartEdit = (s: Service) => {
+  const handleStartEdit = (s: any) => {
     setEditingId(s.id);
     setEditName(s.name);
-    setEditPriceStr(s.base_price.toString());
+    setEditPriceStr(s.basePrice.toString());
     setEditActive(s.active);
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     const price = parseFloat(editPriceStr);
     if (editingId && !isNaN(price) && price >= 0) {
-      updateService(editingId, editName, price, editActive);
-      setEditingId(null);
-      setSuccess('Service saved!');
-      setTimeout(() => setSuccess(''), 2000);
+      const res = await updateServiceAction(editingId, {
+        name: editName,
+        basePrice: price,
+        active: editActive,
+      });
+
+      if (res.success) {
+        setEditingId(null);
+        setSuccess('Service saved!');
+        await fetchServices();
+        setTimeout(() => setSuccess(''), 2000);
+      } else {
+        setError(res.error || 'Failed to update service');
+      }
     }
   };
 
@@ -220,7 +254,7 @@ export default function OwnerServicesPage() {
                         )}
                       </span>
                       <span className="text-[10px] text-zinc-500 mt-0.5 font-bold font-mono">
-                        Base Rate: Rs. {service.base_price.toFixed(2)}
+                        Base Rate: Rs. {service.basePrice.toFixed(2)}
                       </span>
                     </div>
                   </div>

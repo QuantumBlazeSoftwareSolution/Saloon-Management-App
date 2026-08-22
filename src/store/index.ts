@@ -12,12 +12,13 @@ export interface Service {
 
 export interface Profile {
   id: string;
-  full_name: string;
+  saloonId: string;
+  fullName: string;
   phone: string;
   email?: string;
   role: 'barber' | 'owner';
-  avatar_url?: string;
-  commission_pct: number; // e.g. 50 for 50%
+  avatarUrl?: string;
+  commissionPct: number; // e.g. 50 for 50%
   pin?: string;
   active: boolean;
 }
@@ -97,10 +98,11 @@ export const useSaloonStore = create<SaloonState>()(
           const newId = `p_dyn_${Date.now()}`;
           const newProfile: Profile = {
             id: newId,
-            full_name: `Barber (${identifier})`,
+            saloonId: 'default-saloon-id',
+            fullName: `Barber (${identifier})`,
             phone: identifier,
             role: 'barber',
-            commission_pct: 50,
+            commissionPct: 50,
             pin: pin || '1234',
             active: true,
           };
@@ -132,14 +134,14 @@ export const useSaloonStore = create<SaloonState>()(
 
         const price = service.base_price;
         const discountedPrice = price * (1 - discountPct / 100);
-        const commPct = customCommissionPct !== undefined ? customCommissionPct : barber.commission_pct;
+        const commPct = customCommissionPct !== undefined ? customCommissionPct : barber.commissionPct;
         const commissionAmount = Number((discountedPrice * (commPct / 100)).toFixed(2));
         const netAmount = Number((discountedPrice - commissionAmount).toFixed(2));
 
         const newLog: ServiceLog = {
           id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
           barber_id: barberId,
-          barber_name: barber.full_name,
+          barber_name: barber.fullName,
           service_id: serviceId,
           service_name: service.name,
           price_at_time: price,
@@ -195,10 +197,11 @@ export const useSaloonStore = create<SaloonState>()(
         const generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
         const newBarber: Profile = {
           id: `p_barber_${Date.now()}`,
-          full_name: name,
+          saloonId: 'default-saloon-id',
+          fullName: name,
           phone,
           role: 'barber',
-          commission_pct: commissionPct,
+          commissionPct: commissionPct,
           pin: generatedPin,
           active: true,
         };
@@ -210,7 +213,7 @@ export const useSaloonStore = create<SaloonState>()(
 
       updateBarber: (id, name, phone, commissionPct, active) => {
         set(prev => ({
-          profiles: prev.profiles.map(p => p.id === id ? { ...p, full_name: name, phone, commission_pct: commissionPct, active } : p),
+          profiles: prev.profiles.map(p => p.id === id ? { ...p, fullName: name, phone, commissionPct: commissionPct, active } : p),
         }));
       },
 

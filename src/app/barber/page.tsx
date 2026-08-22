@@ -4,30 +4,44 @@ import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, Check, Percent } from 'lucide-react';
+import { getServicesBySaloonIdAction } from '@/lib/actions/services';
+import { insertServiceLogAction, getBarberLogsAction } from '@/lib/actions/service-logs';
 
 export default function AddServicePage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
-  const servicesRaw = useSaloonStore((state) => state.services);
-  const services = servicesRaw.filter(s => s.active);
-  const logs = useSaloonStore((state) => state.logs);
-  const logService = useSaloonStore((state) => state.logService);
-
+  const [services, setServices] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [selectedServiceId, setSelectedServiceId] = useState('');
   const [discountPct, setDiscountPct] = useState(0);
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const fetchDbData = async () => {
+    if (!currentProfile) return;
+    const servicesRes = await getServicesBySaloonIdAction(currentProfile.saloonId, true);
+    if (servicesRes.success && servicesRes.data) {
+      setServices(servicesRes.data);
+    }
+    const logsRes = await getBarberLogsAction(currentProfile.id);
+    if (logsRes.success && logsRes.data) {
+      setLogs(logsRes.data);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (currentProfile) {
+      fetchDbData();
+    }
+  }, [currentProfile]);
 
   const activeService = services.find(s => s.id === selectedServiceId);
   const barberId = currentProfile?.id || '';
-  const commissionPct = currentProfile?.commission_pct || 0;
+  const commissionPct = currentProfile?.commissionPct || 0;
 
   // Calculate pricing previews
-  const basePrice = activeService?.base_price || 0;
+  const basePrice = activeService?.basePrice || 0;
   const discountedPrice = basePrice * (1 - discountPct / 100);
   const estimatedCommission = Number((discountedPrice * (commissionPct / 100)).toFixed(2));
 
@@ -35,28 +49,47 @@ export default function AddServicePage() {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayLogs = logs.filter(
-    (l) => l.barber_id === barberId && new Date(l.created_at) >= todayStart
+    (l) => new Date(l.createdAt) >= todayStart
   );
   
   const todayCount = todayLogs.length;
-  const todayEarned = todayLogs.reduce((sum, l) => sum + l.commission_amount, 0);
+  const todayEarned = todayLogs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedServiceId) return;
+    if (!selectedServiceId || !currentProfile) return;
 
-    logService(barberId, selectedServiceId, discountPct);
-    
-    // Trigger optimistic animation
-    setShowSuccess(true);
-    
-    // Reset form after a brief duration
-    setTimeout(() => {
-      setShowSuccess(false);
-      setSelectedServiceId('');
-      setDiscountPct(0);
-      setShowDiscountInput(false);
-    }, 1000);
+    const priceAtTime = basePrice;
+    const discountAmount = priceAtTime * (discountPct / 100);
+    const netAmount = priceAtTime - discountAmount;
+    const commissionAmount = netAmount * (commissionPct / 100);
+
+    const res = await insertServiceLogAction({
+      saloonId: currentProfile.saloonId,
+      barberId,
+      serviceId: selectedServiceId,
+      priceAtTime,
+      discountPct,
+      commissionPct,
+      commissionAmount,
+      netAmount,
+    });
+
+    if (res.success) {
+      // Trigger optimistic animation
+      setShowSuccess(true);
+      
+      // Refresh database metrics
+      await fetchDbData();
+      
+      // Reset form after a brief duration
+      setTimeout(() => {
+        setShowSuccess(false);
+        setSelectedServiceId('');
+        setDiscountPct(0);
+        setShowDiscountInput(false);
+      }, 1000);
+    }
   };
 
   const handleQuickDiscount = (pct: number) => {
@@ -96,7 +129,7 @@ export default function AddServicePage() {
       <div>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Active Session</span>
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          Hey, {currentProfile?.full_name.split(' ')[0]} ✂️
+          Hey, {currentProfile?.fullName.split(' ')[0]} ✂️
         </h2>
       </div>
 
@@ -121,7 +154,7 @@ export default function AddServicePage() {
                 >
                   <span className="font-bold text-sm leading-snug">{service.name}</span>
                   <span className={`text-base font-extrabold font-mono ${isSelected ? 'text-amber-400' : 'text-zinc-400'}`}>
-                    Rs. {service.base_price.toFixed(2)}
+                    Rs. {service.basePrice.toFixed(2)}
                   </span>
                 </div>
               );

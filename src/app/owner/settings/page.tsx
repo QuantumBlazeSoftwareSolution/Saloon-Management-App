@@ -83,7 +83,7 @@ export default function OwnerSettingsPage() {
                 M
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-sm text-white">{currentProfile?.full_name}</span>
+                <span className="font-bold text-sm text-white">{currentProfile?.fullName}</span>
                 <span className="text-[9px] uppercase tracking-wider text-yellow-500 font-black mt-0.5">Saloon Proprietor</span>
               </div>
             </div>
