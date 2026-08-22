@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DollarSign, BarChart, User, Clock, Scissors, Zap, Calendar, Check, X, UserMinus, Plus, RefreshCw, Loader2 } from 'lucide-react';
+import { DollarSign, BarChart, User, Clock, Scissors, Zap, Calendar, Check, X, UserMinus, Plus, RefreshCw, Loader2, Edit3 } from 'lucide-react';
 import { getAllServiceLogs } from '@/lib/actions/service-logs';
 import { getAllAppointments, updateAppointment } from '@/lib/actions/appointments';
 import { getAllStaff } from '@/lib/actions/profiles';
 import { getAllServices } from '@/lib/actions/services';
 import BookingModal from '@/components/BookingModal';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function OwnerTodayPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
@@ -25,7 +26,10 @@ export default function OwnerTodayPage() {
   const [newLogIds, setNewLogIds] = useState<string[]>([]);
 
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<any | null>(null);
   const [reassigningApp, setReassigningApp] = useState<any | null>(null);
+
+  const [pendingAction, setPendingAction] = useState<{ id: string; status: 'cancelled' | 'no_show'; title: string; message: string } | null>(null);
 
   const fetchDbData = async () => {
     if (!currentProfile) return;
@@ -120,9 +124,20 @@ export default function OwnerTodayPage() {
     (a) => a.status === 'upcoming'
   );
 
-  const handleUpdateStatus = async (id: string, status: 'cancelled' | 'no_show') => {
-    const res = await updateAppointment(id, { status });
+  const triggerStatusUpdate = (app: any, status: 'cancelled' | 'no_show') => {
+    const title = status === 'cancelled' ? 'Cancel Appointment' : 'Mark as No-Show';
+    const message = status === 'cancelled' 
+      ? `Are you sure you want to cancel the appointment for ${app.customerName}?`
+      : `Are you sure you want to mark ${app.customerName} as a no-show for this appointment?`;
+
+    setPendingAction({ id: app.id, status, title, message });
+  };
+
+  const handleConfirmStatusUpdate = async () => {
+    if (!pendingAction) return;
+    const res = await updateAppointment(pendingAction.id, { status: pendingAction.status });
     if (res.success) {
+      setPendingAction(null);
       await fetchDbData();
     }
   };
@@ -136,13 +151,18 @@ export default function OwnerTodayPage() {
     }
   };
 
-  const getServiceNamesDisplay = (ids: string[]) => {
-    if (!ids || ids.length === 0) return 'No Services';
+  const getServiceNamesDisplay = (ids: any) => {
+    if (!ids || !Array.isArray(ids) || ids.length === 0) return 'No Services';
     const names = ids.map((id) => {
       const found = services.find((s) => s.id === id);
       return found ? found.name : 'Unknown Service';
     });
     return names.join(', ');
+  };
+
+  const handleEditClick = (app: any) => {
+    setEditingAppointment(app);
+    setIsBookingOpen(true);
   };
 
   return (
@@ -154,7 +174,10 @@ export default function OwnerTodayPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsBookingOpen(true)}
+            onClick={() => {
+              setEditingAppointment(null);
+              setIsBookingOpen(true);
+            }}
             className="flex items-center gap-1.5 py-2 px-3 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-bold transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -301,7 +324,10 @@ export default function OwnerTodayPage() {
               <Calendar className="h-10 w-10 text-zinc-750 stroke-[1.5] mb-3" />
               <h3 className="font-bold text-zinc-500">No appointments today</h3>
               <button
-                onClick={() => setIsBookingOpen(true)}
+                onClick={() => {
+                  setEditingAppointment(null);
+                  setIsBookingOpen(true);
+                }}
                 className="mt-4 py-2 px-4 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-bold transition-all"
               >
                 Add Appointment
@@ -328,7 +354,16 @@ export default function OwnerTodayPage() {
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-bold text-sm text-white">{app.customerName}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm text-white">{app.customerName}</h4>
+                          <button
+                            onClick={() => handleEditClick(app)}
+                            className="text-zinc-500 hover:text-yellow-500 transition-all p-1"
+                            title="Edit Appointment"
+                          >
+                            <Edit3 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                         <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{app.customerPhone}</p>
                       </div>
                       <div className="text-right">
@@ -339,14 +374,15 @@ export default function OwnerTodayPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-2 bg-zinc-950/40 rounded-lg border border-zinc-850 text-[10px]">
+                    <div className="flex items-center justify-between p-2 bg-zinc-950/40 rounded-lg text-[10px]">
                       <span className="text-zinc-500">Barber:</span>
                       {isReassigning ? (
                         <select
                           onChange={(e) => handleReassign(app.id, e.target.value)}
-                          defaultValue={app.barberId}
+                          defaultValue={app.barberId || ''}
                           className="bg-zinc-900 text-white rounded border border-zinc-800 py-0.5 px-2 text-[10px] focus:outline-none"
                         >
+                          <option value="">-- Unassigned --</option>
                           {barbers.map((b) => (
                             <option key={b.id} value={b.id}>
                               {b.fullName}
@@ -355,7 +391,9 @@ export default function OwnerTodayPage() {
                         </select>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-zinc-350">{app.barberName}</span>
+                          <span className={`font-bold ${app.barberName ? 'text-zinc-350' : 'text-zinc-500 italic'}`}>
+                            {app.barberName || 'Unassigned'}
+                          </span>
                           <button
                             onClick={() => setReassigningApp(app.id)}
                             className="text-[9px] text-yellow-500 hover:text-yellow-400 font-bold"
@@ -367,23 +405,23 @@ export default function OwnerTodayPage() {
                     </div>
 
                     {app.notes && (
-                      <div className="p-2 bg-zinc-950/40 rounded-lg text-[10px] text-zinc-500 border border-zinc-850">
+                      <div className="p-2 bg-zinc-950/40 rounded-lg text-[10px] text-zinc-500">
                         {app.notes}
                       </div>
                     )}
 
                     <div className="flex items-center gap-2 pt-1 border-t border-zinc-900/80">
                       <button
-                        onClick={() => handleUpdateStatus(app.id, 'no_show')}
-                        className="flex-1 py-1.5 px-3 rounded-lg border border-zinc-850 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white transition-all flex items-center justify-center gap-1.5"
+                        onClick={() => triggerStatusUpdate(app, 'no_show')}
+                        className="flex-1 py-1.5 px-3 rounded-lg bg-zinc-900/40 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white transition-all flex items-center justify-center gap-1.5"
                         title="Mark No Show"
                       >
                         <UserMinus className="h-3.5 w-3.5" />
                         <span>No-Show</span>
                       </button>
                       <button
-                        onClick={() => handleUpdateStatus(app.id, 'cancelled')}
-                        className="flex-1 py-1.5 px-3 rounded-lg border border-zinc-850 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white transition-all flex items-center justify-center gap-1.5"
+                        onClick={() => triggerStatusUpdate(app, 'cancelled')}
+                        className="flex-1 py-1.5 px-3 rounded-lg bg-zinc-900/40 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white transition-all flex items-center justify-center gap-1.5"
                         title="Mark Cancelled"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -400,8 +438,21 @@ export default function OwnerTodayPage() {
 
       <BookingModal
         isOpen={isBookingOpen}
-        onClose={() => setIsBookingOpen(false)}
+        onClose={() => {
+          setIsBookingOpen(false);
+          setEditingAppointment(null);
+        }}
         onSuccess={fetchDbData}
+        isOwner={true}
+        appointmentToEdit={editingAppointment}
+      />
+
+      <ConfirmationModal
+        isOpen={pendingAction !== null}
+        title={pendingAction?.title || ''}
+        message={pendingAction?.message || ''}
+        onConfirm={handleConfirmStatusUpdate}
+        onCancel={() => setPendingAction(null)}
         isOwner={true}
       />
     </div>

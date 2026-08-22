@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, RotateCcw, AlertCircle, ShoppingBag, Calendar, Check, X, UserMinus, Plus, Percent, Loader2, Sparkles } from 'lucide-react';
+import { Trash2, RotateCcw, AlertCircle, ShoppingBag, Calendar, Check, X, UserMinus, Plus, Percent, Loader2, Sparkles, Edit3 } from 'lucide-react';
 import { getBarberLogs, deleteServiceLog, createServiceLog } from '@/lib/actions/service-logs';
 import { getBarberAppointments, updateAppointment } from '@/lib/actions/appointments';
 import { getAllServices } from '@/lib/actions/services';
 import BookingModal from '@/components/BookingModal';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function BarberAppointmentsPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
@@ -23,9 +24,12 @@ export default function BarberAppointmentsPage() {
   const [undoTimeoutId, setUndoTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<any | null>(null);
   const [completingAppointment, setCompletingAppointment] = useState<any | null>(null);
   const [completionDiscount, setCompletionDiscount] = useState(0);
   const [completingSubmitting, setCompletingSubmitting] = useState(false);
+
+  const [pendingAction, setPendingAction] = useState<{ id: string; status: 'cancelled' | 'no_show'; title: string; message: string } | null>(null);
 
   const barberId = currentProfile?.id || '';
 
@@ -130,9 +134,20 @@ export default function BarberAppointmentsPage() {
     }
   };
 
-  const handleUpdateStatus = async (id: string, status: 'cancelled' | 'no_show') => {
-    const res = await updateAppointment(id, { status });
+  const triggerStatusUpdate = (app: any, status: 'cancelled' | 'no_show') => {
+    const title = status === 'cancelled' ? 'Cancel Booking' : 'Mark as No-Show';
+    const message = status === 'cancelled'
+      ? `Are you sure you want to cancel the booking for ${app.customerName}?`
+      : `Are you sure you want to mark ${app.customerName} as a no-show?`;
+
+    setPendingAction({ id: app.id, status, title, message });
+  };
+
+  const handleConfirmStatusUpdate = async () => {
+    if (!pendingAction) return;
+    const res = await updateAppointment(pendingAction.id, { status: pendingAction.status });
     if (res.success) {
+      setPendingAction(null);
       await fetchData();
     }
   };
@@ -153,7 +168,7 @@ export default function BarberAppointmentsPage() {
         const commissionAmount = netAmount * (commissionPct / 100);
 
         await createServiceLog({
-          barberId: completingAppointment.barberId,
+          barberId: currentProfile.id,
           serviceId: service.id,
           priceAtTime,
           discountPct: completionDiscount,
@@ -163,7 +178,10 @@ export default function BarberAppointmentsPage() {
         });
       }
 
-      await updateAppointment(completingAppointment.id, { status: 'completed' });
+      await updateAppointment(completingAppointment.id, { 
+        status: 'completed',
+        barberId: currentProfile.id
+      });
       setCompletingAppointment(null);
       setCompletionDiscount(0);
       await fetchData();
@@ -172,8 +190,8 @@ export default function BarberAppointmentsPage() {
     }
   };
 
-  const getServiceNamesDisplay = (ids: string[]) => {
-    if (!ids || ids.length === 0) return 'No Services';
+  const getServiceNamesDisplay = (ids: any) => {
+    if (!ids || !Array.isArray(ids) || ids.length === 0) return 'No Services';
     const names = ids.map((id) => {
       const found = services.find((s) => s.id === id);
       return found ? found.name : 'Unknown Service';
@@ -181,11 +199,16 @@ export default function BarberAppointmentsPage() {
     return names.join(', ');
   };
 
-  const getAppointmentPriceTotal = (ids: string[]) => {
-    if (!ids || ids.length === 0) return 0;
+  const getAppointmentPriceTotal = (ids: any) => {
+    if (!ids || !Array.isArray(ids) || ids.length === 0) return 0;
     return services
       .filter((s) => ids.includes(s.id))
       .reduce((sum, s) => sum + (s.basePrice || 0), 0);
+  };
+
+  const handleEditClick = (app: any) => {
+    setEditingAppointment(app);
+    setIsBookingOpen(true);
   };
 
   return (
@@ -196,7 +219,10 @@ export default function BarberAppointmentsPage() {
           <h2 className="text-xl font-bold text-white mt-0.5">Appointments</h2>
         </div>
         <button
-          onClick={() => setIsBookingOpen(true)}
+          onClick={() => {
+            setEditingAppointment(null);
+            setIsBookingOpen(true);
+          }}
           className="flex items-center gap-1.5 py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all active:scale-95 cursor-pointer"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -350,7 +376,10 @@ export default function BarberAppointmentsPage() {
             <Calendar className="h-10 w-10 text-zinc-750 stroke-[1.5] mb-3" />
             <h3 className="font-bold text-zinc-500">No appointments today</h3>
             <button
-              onClick={() => setIsBookingOpen(true)}
+              onClick={() => {
+                setEditingAppointment(null);
+                setIsBookingOpen(true);
+              }}
               className="mt-4 py-2 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold transition-all"
             >
               Add Appointment
@@ -376,7 +405,16 @@ export default function BarberAppointmentsPage() {
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="font-bold text-sm text-white">{app.customerName}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-sm text-white">{app.customerName}</h4>
+                        <button
+                          onClick={() => handleEditClick(app)}
+                          className="text-zinc-500 hover:text-amber-500 transition-all p-1"
+                          title="Edit Booking"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                       <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{app.customerPhone}</p>
                     </div>
                     <div className="text-right">
@@ -388,7 +426,7 @@ export default function BarberAppointmentsPage() {
                   </div>
 
                   {app.notes && (
-                    <div className="p-2 bg-zinc-950/40 rounded-lg text-[10px] text-zinc-500 border border-zinc-850">
+                    <div className="p-2 bg-zinc-950/40 rounded-lg text-[10px] text-zinc-500">
                       {app.notes}
                     </div>
                   )}
@@ -402,15 +440,15 @@ export default function BarberAppointmentsPage() {
                       <span>Complete</span>
                     </button>
                     <button
-                      onClick={() => handleUpdateStatus(app.id, 'no_show')}
-                      className="py-1.5 px-2.5 rounded-lg border border-zinc-800 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white"
+                      onClick={() => triggerStatusUpdate(app, 'no_show')}
+                      className="py-1.5 px-2.5 rounded-lg bg-zinc-900/40 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white"
                       title="No Show"
                     >
                       <UserMinus className="h-3.5 w-3.5" />
                     </button>
                     <button
-                      onClick={() => handleUpdateStatus(app.id, 'cancelled')}
-                      className="py-1.5 px-2.5 rounded-lg border border-zinc-800 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white"
+                      onClick={() => triggerStatusUpdate(app, 'cancelled')}
+                      className="py-1.5 px-2.5 rounded-lg bg-zinc-900/40 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white"
                       title="Cancel"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -498,9 +536,22 @@ export default function BarberAppointmentsPage() {
 
       <BookingModal
         isOpen={isBookingOpen}
-        onClose={() => setIsBookingOpen(false)}
+        onClose={() => {
+          setIsBookingOpen(false);
+          setEditingAppointment(null);
+        }}
         onSuccess={fetchData}
         defaultBarberId={barberId}
+        isOwner={false}
+        appointmentToEdit={editingAppointment}
+      />
+
+      <ConfirmationModal
+        isOpen={pendingAction !== null}
+        title={pendingAction?.title || ''}
+        message={pendingAction?.message || ''}
+        onConfirm={handleConfirmStatusUpdate}
+        onCancel={() => setPendingAction(null)}
         isOwner={false}
       />
     </div>

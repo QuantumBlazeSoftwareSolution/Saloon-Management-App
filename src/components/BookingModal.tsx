@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Calendar, User, Phone, Briefcase, FileText, Loader2, ArrowRight, ArrowLeft, Clock, Check } from 'lucide-react';
 import { getAllServices } from '@/lib/actions/services';
 import { getAllStaff } from '@/lib/actions/profiles';
-import { createAppointment } from '@/lib/actions/appointments';
+import { createAppointment, updateAppointment } from '@/lib/actions/appointments';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface BookingModalProps {
   onSuccess: () => void;
   defaultBarberId?: string;
   isOwner: boolean;
+  appointmentToEdit?: any | null;
 }
 
 export default function BookingModal({
@@ -20,6 +21,7 @@ export default function BookingModal({
   onSuccess,
   defaultBarberId = '',
   isOwner,
+  appointmentToEdit = null,
 }: BookingModalProps) {
   const [step, setStep] = useState(1);
 
@@ -65,10 +67,29 @@ export default function BookingModal({
   }, [isOpen, isOwner]);
 
   useEffect(() => {
-    if (defaultBarberId) {
+    if (appointmentToEdit) {
+      setCustomerName(appointmentToEdit.customerName || '');
+      setCustomerPhone(appointmentToEdit.customerPhone || '');
+      setSelectedServiceIds(appointmentToEdit.serviceIds || []);
+      setSelectedBarberId(appointmentToEdit.barberId || '');
+      if (appointmentToEdit.scheduledAt) {
+        const d = new Date(appointmentToEdit.scheduledAt);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const formatted = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        setScheduledAtStr(formatted);
+      } else {
+        setScheduledAtStr('');
+      }
+      setNotes(appointmentToEdit.notes || '');
+    } else {
+      setCustomerName('');
+      setCustomerPhone('');
+      setSelectedServiceIds([]);
       setSelectedBarberId(defaultBarberId);
+      setScheduledAtStr('');
+      setNotes('');
     }
-  }, [defaultBarberId]);
+  }, [appointmentToEdit, defaultBarberId, isOpen]);
 
   if (!isOpen) return null;
 
@@ -80,7 +101,6 @@ export default function BookingModal({
 
   const canGoToStep2 = () => {
     if (!customerName.trim() || !customerPhone.trim() || !scheduledAtStr) return false;
-    if (isOwner && !selectedBarberId) return false;
     return true;
   };
 
@@ -97,7 +117,7 @@ export default function BookingModal({
     e.preventDefault();
     setError('');
 
-    const barberIdToUse = isOwner ? selectedBarberId : defaultBarberId;
+    const barberIdToUse = (isOwner ? selectedBarberId : defaultBarberId) || null;
     if (selectedServiceIds.length === 0) {
       setError('Please select at least one service.');
       return;
@@ -105,15 +125,27 @@ export default function BookingModal({
 
     setSubmitting(true);
     try {
-      const res = await createAppointment({
-        barberId: barberIdToUse,
-        customerName,
-        customerPhone,
-        serviceIds: selectedServiceIds,
-        scheduledAt: new Date(scheduledAtStr),
-        notes: notes || null,
-        status: 'upcoming',
-      });
+      let res;
+      if (appointmentToEdit) {
+        res = await updateAppointment(appointmentToEdit.id, {
+          barberId: barberIdToUse,
+          customerName,
+          customerPhone,
+          serviceIds: selectedServiceIds,
+          scheduledAt: new Date(scheduledAtStr),
+          notes: notes || null,
+        });
+      } else {
+        res = await createAppointment({
+          barberId: barberIdToUse,
+          customerName,
+          customerPhone,
+          serviceIds: selectedServiceIds,
+          scheduledAt: new Date(scheduledAtStr),
+          notes: notes || null,
+          status: 'upcoming',
+        });
+      }
 
       if (res.success) {
         onSuccess();
@@ -126,7 +158,7 @@ export default function BookingModal({
         setNotes('');
         setStep(1);
       } else {
-        setError(res.error || 'Failed to book appointment.');
+        setError(res.error || 'Failed to save appointment.');
       }
     } catch (err: any) {
       setError(err.message || 'Error occurred during submission.');
@@ -156,7 +188,7 @@ export default function BookingModal({
           <div className="flex items-center gap-2">
             <Calendar className={`h-4.5 w-4.5 ${isOwner ? 'text-yellow-500' : 'text-amber-500'}`} />
             <h3 className="font-bold text-sm text-white">
-              {step === 1 ? 'Book Appointment' : 'Pick Services'}
+              {appointmentToEdit ? 'Edit Appointment' : step === 1 ? 'Book Appointment' : 'Pick Services'}
             </h3>
           </div>
           <div className="flex items-center gap-3">
@@ -217,8 +249,17 @@ export default function BookingModal({
 
             {isOwner && (
               <div>
-                <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1.5 flex items-center gap-1">
-                  Assign Barber
+                <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1.5 flex items-center justify-between">
+                  <span>Assign Barber (Optional)</span>
+                  {selectedBarberId && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBarberId('')}
+                      className="text-[9px] text-zinc-400 hover:text-red-400 transition-all"
+                    >
+                      Clear selection
+                    </button>
+                  )}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {barbers.map((b) => {
@@ -374,7 +415,7 @@ export default function BookingModal({
               >
                 {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 {selectedTotal > 0 ? (
-                  <span>Book · Rs. {selectedTotal.toLocaleString()}</span>
+                  <span>{appointmentToEdit ? 'Save Changes' : `Book · Rs. ${selectedTotal.toLocaleString()}`}</span>
                 ) : (
                   <span>Book Appointment</span>
                 )}

@@ -5,8 +5,7 @@ import { appointmentStatusEnum } from './enum';
 export const appointmentsTable = pgTable('appointments', {
   id: uuid('id').defaultRandom().primaryKey(),
   barberId: uuid('barber_id')
-    .references(() => profilesTable.id, { onDelete: 'cascade' })
-    .notNull(),
+    .references(() => profilesTable.id, { onDelete: 'cascade' }),
   customerName: text('customer_name').notNull(),
   customerPhone: text('customer_phone').notNull(),
   serviceIds: jsonb('service_ids').notNull().$type<string[]>(),
