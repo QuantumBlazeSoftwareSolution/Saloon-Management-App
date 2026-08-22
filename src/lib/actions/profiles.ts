@@ -4,6 +4,7 @@ import { createProfile, updateProfile } from '../db/profiles/write';
 import { getProfileById, getProfilesBySaloonId, authenticateProfile } from '../db/profiles/read';
 import { profilesTable, ProfileInsert } from '../db/schema/profiles';
 import { usersTable } from '../db/schema/users';
+import { saloonsTable } from '../db/schema/saloons';
 import { db } from '../db';
 import { revalidatePath } from 'next/cache';
 import { sendOtpEmail } from '../email';
@@ -143,5 +144,46 @@ export async function getProfileByIdAction(id: string) {
     return { success: true, data: profile };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to fetch profile.' };
+  }
+}
+
+export async function checkAndHealSaloonAction(profileId: string) {
+  try {
+    const profile = await getProfileById(profileId);
+    if (!profile) return { success: false, error: 'Profile not found' };
+
+    if (!profile.saloonId) {
+      const existingSaloon = await db
+        .select()
+        .from(saloonsTable)
+        .where(eq(saloonsTable.ownerId, profile.id))
+        .limit(1);
+
+      let saloonId = existingSaloon[0]?.id;
+
+      if (!saloonId) {
+        const [newSaloon] = await db
+          .insert(saloonsTable)
+          .values({
+            name: `${profile.fullName}'s Saloon`,
+            commissionDefaultPct: 50,
+            ownerId: profile.id,
+          })
+          .returning();
+        saloonId = newSaloon.id;
+      }
+
+      const updatedProfile = await db
+        .update(profilesTable)
+        .set({ saloonId })
+        .where(eq(profilesTable.id, profile.id))
+        .returning();
+
+      return { success: true, profile: updatedProfile[0] };
+    }
+
+    return { success: true, profile };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }

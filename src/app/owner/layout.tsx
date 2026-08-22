@@ -23,7 +23,20 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     if (!_hasHydrated) return;
     if (!currentProfile || authRole !== 'owner') {
       router.replace('/login');
+      return;
     }
+
+    const healProfile = async () => {
+      if (!currentProfile.saloonId) {
+        const { checkAndHealSaloonAction } = await import('@/lib/actions/profiles');
+        const res = await checkAndHealSaloonAction(currentProfile.id);
+        if (res.success && res.profile) {
+          useSaloonStore.setState({ currentProfile: res.profile as any });
+        }
+      }
+    };
+
+    healProfile();
   }, [currentProfile, authRole, _hasHydrated, router]);
 
   // Simulate other barbers logging services in real-time
