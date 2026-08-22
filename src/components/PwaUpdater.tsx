@@ -89,24 +89,24 @@ export default function PwaUpdater() {
   return (
     <AnimatePresence>
       {showInstallSheet && deferredPrompt && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm">
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className="w-full max-w-md overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 p-6 shadow-2xl pb-safe"
+            className="w-full max-w-md overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800/80 p-5 shadow-2xl pb-safe"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${isBarber ? 'bg-amber-500/10 text-amber-500' : 'bg-yellow-600/10 text-yellow-500'}`}>
-                  <Download className="h-6 w-6" />
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3.5">
+                <div className={`flex-shrink-0 p-3 rounded-xl ${isBarber ? 'bg-amber-500/10 text-amber-500' : 'bg-yellow-600/10 text-yellow-500'}`}>
+                  <Download className="h-5 w-5" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-lg text-white">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm text-white leading-snug">
                     {isBarber ? 'Install Barber App' : 'Install Owner Dashboard'}
                   </h3>
-                  <p className="text-zinc-400 text-sm mt-0.5">
+                  <p className="text-zinc-400 text-xs mt-1 leading-normal">
                     {isBarber 
                       ? 'Log services instantly even when offline.' 
                       : 'Track today’s sales and metrics from anywhere.'}
@@ -115,22 +115,22 @@ export default function PwaUpdater() {
               </div>
               <button 
                 onClick={dismissPrompt} 
-                className="p-1 rounded-lg text-zinc-500 hover:text-white transition-colors"
+                className="flex-shrink-0 p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-all"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 mt-5">
               <button
                 onClick={dismissPrompt}
-                className="flex-1 py-3 px-4 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-300 font-semibold hover:bg-zinc-800 hover:text-white transition-all active:scale-[0.98]"
+                className="flex-1 py-2.5 px-4 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-400 text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all active:scale-[0.98]"
               >
                 Not Now
               </button>
               <button
                 onClick={triggerInstall}
-                className={`flex-1 py-3 px-4 rounded-xl font-semibold text-black transition-all active:scale-[0.98] ${
+                className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-black transition-all active:scale-[0.98] ${
                   isBarber 
                     ? 'bg-amber-500 hover:bg-amber-400' 
                     : 'bg-yellow-500 hover:bg-yellow-400'
