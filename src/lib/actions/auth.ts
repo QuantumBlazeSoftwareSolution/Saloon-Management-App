@@ -3,9 +3,10 @@
 import { authenticateUser } from '../db/users/read';
 import { getProfileById } from '../db/profiles/read';
 import { sendOtpEmail } from '../email';
+import { db } from '../db';
+import { usersTable } from '../db/schema/users';
+import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-
-const ownerOtpCache = new Map<string, { code: string; expires: number }>();
 
 export async function loginBarberAction(phone: string, pinOrPassword: string) {
   try {
@@ -45,8 +46,13 @@ export async function loginOwnerAction(email: string, password: string) {
 
     // Generate and send OTP code
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = Date.now() + 5 * 60 * 1000;
-    ownerOtpCache.set(cleanEmail, { code: otp, expires: expiry });
+    const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+    // Save to user table in DB
+    await db
+      .update(usersTable)
+      .set({ otp, otpExpires: expiry })
+      .where(eq(usersTable.id, user.id));
 
     await sendOtpEmail(cleanEmail, otp);
     return { success: true };
@@ -58,27 +64,28 @@ export async function loginOwnerAction(email: string, password: string) {
 export async function verifyOwnerOtpAction(email: string, code: string) {
   try {
     const cleanEmail = email.trim().toLowerCase();
-    const record = ownerOtpCache.get(cleanEmail);
-
-    if (!record) {
-      return { success: false, error: 'OTP has not been requested or has expired.' };
+    const user = await authenticateUser(cleanEmail);
+    if (!user || user.role !== 'owner') {
+      return { success: false, error: 'Owner account not found.' };
     }
 
-    if (Date.now() > record.expires) {
-      ownerOtpCache.delete(cleanEmail);
+    if (!user.otp || !user.otpExpires) {
+      return { success: false, error: 'OTP has not been requested.' };
+    }
+
+    if (new Date() > new Date(user.otpExpires)) {
       return { success: false, error: 'OTP expired.' };
     }
 
-    if (record.code !== code.trim()) {
+    if (user.otp !== code.trim()) {
       return { success: false, error: 'Invalid OTP code.' };
     }
 
-    ownerOtpCache.delete(cleanEmail);
-
-    const user = await authenticateUser(cleanEmail);
-    if (!user) {
-      return { success: false, error: 'Owner account not found.' };
-    }
+    // Clear OTP in DB
+    await db
+      .update(usersTable)
+      .set({ otp: null, otpExpires: null })
+      .where(eq(usersTable.id, user.id));
 
     const profile = await getProfileById(user.profileId);
     return { success: true, profile };

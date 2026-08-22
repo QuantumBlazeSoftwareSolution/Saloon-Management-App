@@ -39,9 +39,9 @@ async function main() {
     .values({
       saloonId: saloon.id,
       role: 'owner',
-      fullName: 'Marcus Sterling',
+      fullName: 'Vihanga Heshan',
       phone: '0771234567',
-      email: 'marcus@saloon.com',
+      email: 'vihangaheshan37@gmail.com',
       commissionPct: 0,
       active: true,
     })
@@ -56,11 +56,11 @@ async function main() {
     .where(eq(saloonsTable.id, saloon.id));
 
   // Create Owner User Credentials
-  const ownerPasswordHash = await bcrypt.hash('owner123', 10);
+  const ownerPasswordHash = await bcrypt.hash('Test@123', 10);
   const [ownerUser] = await db
     .insert(usersTable)
     .values({
-      email: 'marcus@saloon.com',
+      email: 'vihangaheshan37@gmail.com',
       phone: '0771234567',
       passwordHash: ownerPasswordHash,
       role: 'owner',

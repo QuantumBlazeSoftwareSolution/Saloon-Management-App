@@ -10,6 +10,8 @@ export const usersTable = pgTable('users', {
   profileId: uuid('profile_id')
     .references(() => profilesTable.id, { onDelete: 'cascade' })
     .notNull(),
+  otp: text('otp'),
+  otpExpires: timestamp('otp_expires'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')
     .notNull()

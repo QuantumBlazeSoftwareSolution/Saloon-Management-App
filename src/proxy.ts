@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 function safeCompare(a: string, b: string): boolean {
   const encoder = new TextEncoder();
@@ -20,15 +20,21 @@ function safeCompare(a: string, b: string): boolean {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Validate API key for all routes starting with /api
-  if (pathname.startsWith('/api')) {
-    const apiKey = req.headers.get('x-api-key');
-    const expectedKey = process.env.API_KEY || 'sterling-secret-key-101';
+  if (pathname.startsWith("/api")) {
+    const apiKey = req.headers.get("x-api-key");
+    const expectedKey = process.env.API_KEY;
+
+    if (!expectedKey) {
+      return NextResponse.json(
+        { message: "Server configuration error: API key not set" },
+        { status: 500 },
+      );
+    }
 
     if (!apiKey || !safeCompare(apiKey, expectedKey)) {
       return NextResponse.json(
-        { message: 'Unauthorized: Invalid or missing API key' },
-        { status: 401 }
+        { message: "Unauthorized: Invalid or missing API key" },
+        { status: 401 },
       );
     }
   }
@@ -37,5 +43,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: "/api/:path*",
 };
