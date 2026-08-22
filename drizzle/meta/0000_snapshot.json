@@ -1,5 +1,5 @@
 {
-  "id": "58d6c39c-b42c-44a7-bf17-bab817cf2c79",
+  "id": "14e0f157-6b07-4ef4-a69b-726b48f8daf2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -33,9 +33,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "service_id": {
-          "name": "service_id",
-          "type": "uuid",
+        "service_ids": {
+          "name": "service_ids",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": true
         },
@@ -47,7 +47,8 @@
         },
         "status": {
           "name": "status",
-          "type": "text",
+          "type": "appointment_status_enum",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
           "default": "'upcoming'"
@@ -74,19 +75,6 @@
           "tableTo": "profiles",
           "columnsFrom": [
             "barber_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "appointments_service_id_services_catalog_id_fk": {
-          "name": "appointments_service_id_services_catalog_id_fk",
-          "tableFrom": "appointments",
-          "tableTo": "services_catalog",
-          "columnsFrom": [
-            "service_id"
           ],
           "columnsTo": [
             "id"
@@ -450,6 +438,16 @@
     }
   },
   "enums": {
+    "public.appointment_status_enum": {
+      "name": "appointment_status_enum",
+      "schema": "public",
+      "values": [
+        "upcoming",
+        "completed",
+        "cancelled",
+        "no_show"
+      ]
+    },
     "public.role_enum": {
       "name": "role_enum",
       "schema": "public",

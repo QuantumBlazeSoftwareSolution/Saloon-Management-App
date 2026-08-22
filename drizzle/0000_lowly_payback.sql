@@ -1,12 +1,13 @@
+CREATE TYPE "public"."appointment_status_enum" AS ENUM('upcoming', 'completed', 'cancelled', 'no_show');--> statement-breakpoint
 CREATE TYPE "public"."role_enum" AS ENUM('owner', 'barber');--> statement-breakpoint
 CREATE TABLE "appointments" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"barber_id" uuid NOT NULL,
 	"customer_name" text NOT NULL,
 	"customer_phone" text NOT NULL,
-	"service_id" uuid NOT NULL,
+	"service_ids" jsonb NOT NULL,
 	"scheduled_at" timestamp NOT NULL,
-	"status" text DEFAULT 'upcoming' NOT NULL,
+	"status" "appointment_status_enum" DEFAULT 'upcoming' NOT NULL,
 	"notes" text,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
@@ -63,7 +64,6 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 ALTER TABLE "appointments" ADD CONSTRAINT "appointments_barber_id_profiles_id_fk" FOREIGN KEY ("barber_id") REFERENCES "public"."profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "appointments" ADD CONSTRAINT "appointments_service_id_services_catalog_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."services_catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "service_logs" ADD CONSTRAINT "service_logs_barber_id_profiles_id_fk" FOREIGN KEY ("barber_id") REFERENCES "public"."profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "service_logs" ADD CONSTRAINT "service_logs_service_id_services_catalog_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."services_catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_profile_id_profiles_id_fk" FOREIGN KEY ("profile_id") REFERENCES "public"."profiles"("id") ON DELETE cascade ON UPDATE no action;
