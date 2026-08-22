@@ -124,9 +124,6 @@ export default function OwnerLogin() {
                     className="w-full rounded-xl border border-zinc-800 bg-zinc-900/50 py-3.5 pl-12 pr-4 text-white placeholder-zinc-650 focus:border-yellow-500 focus:outline-none focus:ring-1 focus:ring-yellow-500 transition-all text-sm"
                   />
                 </div>
-                <p className="text-[10px] text-zinc-600 mt-2">
-                  Demo value: <span className="font-mono">marcus@saloon.com</span> (or any email).
-                </p>
               </div>
 
               <div>

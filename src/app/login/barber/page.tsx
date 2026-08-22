@@ -110,9 +110,6 @@ export default function BarberLogin() {
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-900/50 py-3.5 pl-12 pr-4 text-white placeholder-zinc-700 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-all font-mono tracking-widest"
               />
             </div>
-            <p className="text-[10px] text-zinc-600 mt-2">
-              Demo defaults: phone <span className="font-mono">0777111222</span> & PIN <span className="font-mono">1234</span>
-            </p>
           </div>
 
           <button
