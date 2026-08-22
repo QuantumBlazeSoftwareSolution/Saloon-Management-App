@@ -8,6 +8,13 @@
       "when": 1787320352785,
       "tag": "0000_mature_sheva_callister",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787407878645,
+      "tag": "0001_magical_professor_monster",
+      "breakpoints": true
     }
   ]
 }
