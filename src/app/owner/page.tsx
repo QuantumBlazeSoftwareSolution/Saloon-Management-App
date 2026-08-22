@@ -7,6 +7,7 @@ import { DollarSign, BarChart, User, Clock, Scissors, Zap, Calendar, Check, X, U
 import { getAllServiceLogs } from '@/lib/actions/service-logs';
 import { getAllAppointments, updateAppointment } from '@/lib/actions/appointments';
 import { getAllStaff } from '@/lib/actions/profiles';
+import { getAllServices } from '@/lib/actions/services';
 import BookingModal from '@/components/BookingModal';
 
 export default function OwnerTodayPage() {
@@ -17,6 +18,7 @@ export default function OwnerTodayPage() {
   const [logs, setLogs] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [barbers, setBarbers] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [prevLogsCount, setPrevLogsCount] = useState(0);
@@ -41,6 +43,11 @@ export default function OwnerTodayPage() {
       const barbRes = await getAllStaff();
       if (barbRes.success && barbRes.data) {
         setBarbers(barbRes.data.filter((p: any) => p.role === 'barber' && p.active));
+      }
+
+      const servRes = await getAllServices(true);
+      if (servRes.success && servRes.data) {
+        setServices(servRes.data);
       }
     } finally {
       setIsLoading(false);
@@ -127,6 +134,15 @@ export default function OwnerTodayPage() {
       setReassigningApp(null);
       await fetchDbData();
     }
+  };
+
+  const getServiceNamesDisplay = (ids: string[]) => {
+    if (!ids || ids.length === 0) return 'No Services';
+    const names = ids.map((id) => {
+      const found = services.find((s) => s.id === id);
+      return found ? found.name : 'Unknown Service';
+    });
+    return names.join(', ');
   };
 
   return (
@@ -316,7 +332,9 @@ export default function OwnerTodayPage() {
                         <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{app.customerPhone}</p>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs font-bold text-yellow-500">{app.serviceName}</span>
+                        <span className="text-xs font-bold text-yellow-500">
+                          {getServiceNamesDisplay(app.serviceIds)}
+                        </span>
                         <p className="text-[9px] text-zinc-500 font-mono mt-0.5">{scheduledDate} @ {scheduledTime}</p>
                       </div>
                     </div>

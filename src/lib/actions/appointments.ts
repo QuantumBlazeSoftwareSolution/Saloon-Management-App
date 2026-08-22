@@ -3,12 +3,11 @@
 import { db } from '../db';
 import { appointmentsTable, AppointmentInsert } from '../db/schema/appointments';
 import { profilesTable } from '../db/schema/profiles';
-import { servicesCatalogTable } from '../db/schema/services-catalog';
 import { revalidatePath } from 'next/cache';
-import { eq, and, asc } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 
 export async function createAppointment(data: AppointmentInsert) {
-  console.log(`[createAppointment] Booking appointment for: ${data.customerName} with barber: ${data.barberId}`);
+  console.log(`[createAppointment] Booking for: ${data.customerName}, barber: ${data.barberId}, services: ${JSON.stringify(data.serviceIds)}`);
   try {
     const [appointment] = await db
       .insert(appointmentsTable)
@@ -34,7 +33,7 @@ export async function updateAppointment(id: string, data: Partial<AppointmentIns
       .where(eq(appointmentsTable.id, id))
       .returning();
 
-    console.log(`[updateAppointment] Success: updated appointment status to ${appointment.status}`);
+    console.log(`[updateAppointment] Success: updated appointment ${appointment.id} status=${appointment.status}`);
     revalidatePath('/barber/history');
     revalidatePath('/owner');
     return { success: true, data: appointment };
@@ -53,18 +52,15 @@ export async function getAllAppointments() {
         barberId: appointmentsTable.barberId,
         customerName: appointmentsTable.customerName,
         customerPhone: appointmentsTable.customerPhone,
-        serviceId: appointmentsTable.serviceId,
+        serviceIds: appointmentsTable.serviceIds,
         scheduledAt: appointmentsTable.scheduledAt,
         status: appointmentsTable.status,
         notes: appointmentsTable.notes,
         createdAt: appointmentsTable.createdAt,
         barberName: profilesTable.fullName,
-        serviceName: servicesCatalogTable.name,
-        servicePrice: servicesCatalogTable.basePrice,
       })
       .from(appointmentsTable)
       .leftJoin(profilesTable, eq(appointmentsTable.barberId, profilesTable.id))
-      .leftJoin(servicesCatalogTable, eq(appointmentsTable.serviceId, servicesCatalogTable.id))
       .orderBy(asc(appointmentsTable.scheduledAt));
 
     console.log(`[getAllAppointments] Success: fetched ${result.length} appointments`);
@@ -84,18 +80,15 @@ export async function getBarberAppointments(barberId: string) {
         barberId: appointmentsTable.barberId,
         customerName: appointmentsTable.customerName,
         customerPhone: appointmentsTable.customerPhone,
-        serviceId: appointmentsTable.serviceId,
+        serviceIds: appointmentsTable.serviceIds,
         scheduledAt: appointmentsTable.scheduledAt,
         status: appointmentsTable.status,
         notes: appointmentsTable.notes,
         createdAt: appointmentsTable.createdAt,
         barberName: profilesTable.fullName,
-        serviceName: servicesCatalogTable.name,
-        servicePrice: servicesCatalogTable.basePrice,
       })
       .from(appointmentsTable)
       .leftJoin(profilesTable, eq(appointmentsTable.barberId, profilesTable.id))
-      .leftJoin(servicesCatalogTable, eq(appointmentsTable.serviceId, servicesCatalogTable.id))
       .where(eq(appointmentsTable.barberId, barberId))
       .orderBy(asc(appointmentsTable.scheduledAt));
 

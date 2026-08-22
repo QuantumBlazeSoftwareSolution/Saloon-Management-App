@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Calendar, User, Phone, Briefcase, FileText, Loader2, ArrowRight, ArrowLeft, Clock } from 'lucide-react';
+import { X, Calendar, User, Phone, Briefcase, FileText, Loader2, ArrowRight, ArrowLeft, Clock, Check } from 'lucide-react';
 import { getAllServices } from '@/lib/actions/services';
 import { getAllStaff } from '@/lib/actions/profiles';
 import { createAppointment } from '@/lib/actions/appointments';
@@ -25,7 +25,7 @@ export default function BookingModal({
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [selectedServiceId, setSelectedServiceId] = useState('');
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState(defaultBarberId);
   const [scheduledAtStr, setScheduledAtStr] = useState('');
   const [notes, setNotes] = useState('');
@@ -72,6 +72,12 @@ export default function BookingModal({
 
   if (!isOpen) return null;
 
+  const toggleService = (id: string) => {
+    setSelectedServiceIds((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
+
   const canGoToStep2 = () => {
     if (!customerName.trim() || !customerPhone.trim() || !scheduledAtStr) return false;
     if (isOwner && !selectedBarberId) return false;
@@ -92,8 +98,8 @@ export default function BookingModal({
     setError('');
 
     const barberIdToUse = isOwner ? selectedBarberId : defaultBarberId;
-    if (!selectedServiceId) {
-      setError('Please select a service.');
+    if (selectedServiceIds.length === 0) {
+      setError('Please select at least one service.');
       return;
     }
 
@@ -103,7 +109,7 @@ export default function BookingModal({
         barberId: barberIdToUse,
         customerName,
         customerPhone,
-        serviceId: selectedServiceId,
+        serviceIds: selectedServiceIds,
         scheduledAt: new Date(scheduledAtStr),
         notes: notes || null,
         status: 'upcoming',
@@ -114,7 +120,7 @@ export default function BookingModal({
         onClose();
         setCustomerName('');
         setCustomerPhone('');
-        setSelectedServiceId('');
+        setSelectedServiceIds([]);
         setSelectedBarberId(defaultBarberId);
         setScheduledAtStr('');
         setNotes('');
@@ -139,14 +145,18 @@ export default function BookingModal({
       })
     : '';
 
+  const selectedTotal = services
+    .filter((s) => selectedServiceIds.includes(s.id))
+    .reduce((sum: number, s: any) => sum + (s.basePrice || 0), 0);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 p-5 shadow-2xl pb-safe">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 p-5 pb-8 shadow-2xl mb-safe">
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3.5 mb-4">
           <div className="flex items-center gap-2">
             <Calendar className={`h-4.5 w-4.5 ${isOwner ? 'text-yellow-500' : 'text-amber-500'}`} />
             <h3 className="font-bold text-sm text-white">
-              {step === 1 ? 'Book Appointment' : 'Pick Service'}
+              {step === 1 ? 'Book Appointment' : 'Pick Services'}
             </h3>
           </div>
           <div className="flex items-center gap-3">
@@ -267,9 +277,9 @@ export default function BookingModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="p-2.5 rounded-xl bg-zinc-950/50 border border-zinc-850 flex items-center justify-between">
+            <div className="p-2.5 rounded-xl bg-zinc-950/50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className={`h-7 w-7 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center ${isOwner ? 'text-yellow-500' : 'text-amber-500'} text-[10px] font-black`}>
+                <div className={`h-7 w-7 rounded-full bg-zinc-800 flex items-center justify-center ${isOwner ? 'text-yellow-500' : 'text-amber-500'} text-[10px] font-black`}>
                   {customerName.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex flex-col">
@@ -289,28 +299,40 @@ export default function BookingModal({
 
             <div>
               <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-2 flex items-center gap-1">
-                <Briefcase className="h-3 w-3" /> Pick Service
+                <Briefcase className="h-3 w-3" /> Pick Services
+                {selectedServiceIds.length > 0 && (
+                  <span className={`ml-1 ${isOwner ? 'text-yellow-500' : 'text-amber-500'}`}>
+                    ({selectedServiceIds.length} selected)
+                  </span>
+                )}
               </label>
-              <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto pr-1">
+              <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
                 {services.map((s) => {
-                  const isSelected = selectedServiceId === s.id;
+                  const isSelected = selectedServiceIds.includes(s.id);
                   return (
                     <button
                       key={s.id}
                       type="button"
-                      onClick={() => setSelectedServiceId(s.id)}
-                      className={`py-2 px-3.5 rounded-full text-xs font-bold transition-all border ${
+                      onClick={() => toggleService(s.id)}
+                      className={`w-full flex items-center justify-between py-2.5 px-3.5 rounded-xl text-xs font-bold transition-all border ${
                         isSelected
                           ? isOwner
-                            ? 'bg-yellow-500 border-yellow-400 text-black shadow-lg shadow-yellow-500/10'
-                            : 'bg-amber-500 border-amber-400 text-black shadow-lg shadow-amber-500/10'
+                            ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-500'
+                            : 'bg-amber-500/10 border-amber-500/40 text-amber-500'
                           : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:border-zinc-700'
                       }`}
                     >
-                      {s.name}
-                      <span className={`ml-1.5 ${isSelected ? 'text-black/60' : 'text-zinc-600'}`}>
-                        Rs. {s.basePrice}
-                      </span>
+                      <span>{s.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`${isSelected ? (isOwner ? 'text-yellow-500/60' : 'text-amber-500/60') : 'text-zinc-600'}`}>
+                          Rs. {s.basePrice}
+                        </span>
+                        {isSelected && (
+                          <div className={`h-4.5 w-4.5 rounded-md flex items-center justify-center ${isOwner ? 'bg-yellow-500' : 'bg-amber-500'}`}>
+                            <Check className="h-3 w-3 text-black" strokeWidth={3} />
+                          </div>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -341,9 +363,9 @@ export default function BookingModal({
               </button>
               <button
                 type="submit"
-                disabled={submitting || !selectedServiceId}
+                disabled={submitting || selectedServiceIds.length === 0}
                 className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-black transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
-                  submitting || !selectedServiceId
+                  submitting || selectedServiceIds.length === 0
                     ? 'bg-zinc-700 cursor-not-allowed text-zinc-500'
                     : isOwner
                     ? 'bg-yellow-500 hover:bg-yellow-400'
@@ -351,7 +373,11 @@ export default function BookingModal({
                 }`}
               >
                 {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                <span>Book Appointment</span>
+                {selectedTotal > 0 ? (
+                  <span>Book · Rs. {selectedTotal.toLocaleString()}</span>
+                ) : (
+                  <span>Book Appointment</span>
+                )}
               </button>
             </div>
           </form>

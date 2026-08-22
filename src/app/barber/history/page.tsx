@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, RotateCcw, AlertCircle, ShoppingBag, Calendar, Check, X, UserMinus, Plus, Percent, Loader2, Sparkles } from 'lucide-react';
 import { getBarberLogs, deleteServiceLog, createServiceLog } from '@/lib/actions/service-logs';
 import { getBarberAppointments, updateAppointment } from '@/lib/actions/appointments';
+import { getAllServices } from '@/lib/actions/services';
 import BookingModal from '@/components/BookingModal';
 
 export default function BarberAppointmentsPage() {
@@ -14,6 +15,7 @@ export default function BarberAppointmentsPage() {
 
   const [logs, setLogs] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [recentlyDeleted, setRecentlyDeleted] = useState<any | null>(null);
@@ -37,6 +39,10 @@ export default function BarberAppointmentsPage() {
       const appRes = await getBarberAppointments(barberId);
       if (appRes.success && appRes.data) {
         setAppointments(appRes.data);
+      }
+      const servRes = await getAllServices(true);
+      if (servRes.success && servRes.data) {
+        setServices(servRes.data);
       }
     } finally {
       setIsLoading(false);
@@ -137,31 +143,49 @@ export default function BarberAppointmentsPage() {
 
     setCompletingSubmitting(true);
     try {
-      const priceAtTime = Number(completingAppointment.servicePrice);
-      const discountAmount = priceAtTime * (completionDiscount / 100);
-      const netAmount = priceAtTime - discountAmount;
-      const commissionPct = Number(currentProfile.commissionPct);
-      const commissionAmount = netAmount * (commissionPct / 100);
+      const appServices = services.filter((s) => completingAppointment.serviceIds?.includes(s.id));
+      
+      for (const service of appServices) {
+        const priceAtTime = Number(service.basePrice);
+        const discountAmount = priceAtTime * (completionDiscount / 100);
+        const netAmount = priceAtTime - discountAmount;
+        const commissionPct = Number(currentProfile.commissionPct);
+        const commissionAmount = netAmount * (commissionPct / 100);
 
-      const logRes = await createServiceLog({
-        barberId: completingAppointment.barberId,
-        serviceId: completingAppointment.serviceId,
-        priceAtTime,
-        discountPct: completionDiscount,
-        commissionPct,
-        commissionAmount,
-        netAmount,
-      });
-
-      if (logRes.success) {
-        await updateAppointment(completingAppointment.id, { status: 'completed' });
-        setCompletingAppointment(null);
-        setCompletionDiscount(0);
-        await fetchData();
+        await createServiceLog({
+          barberId: completingAppointment.barberId,
+          serviceId: service.id,
+          priceAtTime,
+          discountPct: completionDiscount,
+          commissionPct,
+          commissionAmount,
+          netAmount,
+        });
       }
+
+      await updateAppointment(completingAppointment.id, { status: 'completed' });
+      setCompletingAppointment(null);
+      setCompletionDiscount(0);
+      await fetchData();
     } finally {
       setCompletingSubmitting(false);
     }
+  };
+
+  const getServiceNamesDisplay = (ids: string[]) => {
+    if (!ids || ids.length === 0) return 'No Services';
+    const names = ids.map((id) => {
+      const found = services.find((s) => s.id === id);
+      return found ? found.name : 'Unknown Service';
+    });
+    return names.join(', ');
+  };
+
+  const getAppointmentPriceTotal = (ids: string[]) => {
+    if (!ids || ids.length === 0) return 0;
+    return services
+      .filter((s) => ids.includes(s.id))
+      .reduce((sum, s) => sum + (s.basePrice || 0), 0);
   };
 
   return (
@@ -257,18 +281,18 @@ export default function BarberAppointmentsPage() {
                     <span className="font-bold text-white">{completingAppointment.customerName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-zinc-500">Service:</span>
-                    <span className="font-bold text-white">{completingAppointment.serviceName}</span>
+                    <span className="text-zinc-500">Services:</span>
+                    <span className="font-bold text-white text-right max-w-[200px] truncate">{getServiceNamesDisplay(completingAppointment.serviceIds)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-zinc-500">Base Price:</span>
-                    <span className="font-mono text-zinc-300">Rs. {Number(completingAppointment.servicePrice).toFixed(2)}</span>
+                    <span className="text-zinc-500">Total Base Price:</span>
+                    <span className="font-mono text-zinc-300">Rs. {getAppointmentPriceTotal(completingAppointment.serviceIds).toFixed(2)}</span>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1.5 flex justify-between">
-                    <span>Discount Discount ({completionDiscount}%)</span>
+                    <span>Discount ({completionDiscount}%)</span>
                   </label>
                   <div className="flex gap-2 mb-2">
                     {[0, 10, 20].map((pct) => (
@@ -356,7 +380,9 @@ export default function BarberAppointmentsPage() {
                       <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{app.customerPhone}</p>
                     </div>
                     <div className="text-right">
-                      <span className="text-xs font-bold text-amber-400">{app.serviceName}</span>
+                      <span className="text-xs font-bold text-amber-400">
+                        {getServiceNamesDisplay(app.serviceIds)}
+                      </span>
                       <p className="text-[9px] text-zinc-500 font-mono mt-0.5">{scheduledDate} @ {scheduledTime}</p>
                     </div>
                   </div>
