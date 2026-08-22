@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
-import { Users, UserPlus, Phone, Landmark, Check, ShieldAlert, Lock, Copy, Share2 } from 'lucide-react';
+import { Users, UserPlus, Phone, Landmark, Check, ShieldAlert, Lock, Copy, Share2, Loader2 } from 'lucide-react';
 import { getAllStaff, createStaff, updateStaff } from '@/lib/actions/profiles';
 
 export default function OwnerStaffPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -25,9 +26,14 @@ export default function OwnerStaffPage() {
 
   const fetchProfiles = async () => {
     if (!currentProfile) return;
-    const res = await getAllStaff();
-    if (res.success && res.data) {
-      setProfiles(res.data);
+    setIsLoading(true);
+    try {
+      const res = await getAllStaff();
+      if (res.success && res.data) {
+        setProfiles(res.data);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -219,142 +225,153 @@ export default function OwnerStaffPage() {
           </div>
 
           <div className="space-y-3">
-            {barbers.map((barber) => {
-              const isEditing = editingId === barber.id;
-              
-              if (isEditing) {
-                return (
-                  <form 
-                    key={barber.id} 
-                    onSubmit={handleSaveEdit}
-                    className="border border-yellow-500/30 bg-zinc-900/50 p-4 rounded-2xl space-y-3"
-                  >
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Name</label>
-                        <input
-                          type="text"
-                          required
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3.5 text-xs text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Phone</label>
-                        <input
-                          type="tel"
-                          required
-                          value={editPhone}
-                          onChange={(e) => setEditPhone(e.target.value)}
-                          className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3.5 text-xs text-white font-mono"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Access PIN</label>
-                        <input
-                          type="text"
-                          maxLength={4}
-                          value={editPin}
-                          onChange={(e) => setEditPin(e.target.value.replace(/\D/g, ''))}
-                          className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3.5 text-xs text-white font-mono"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 pt-3">
-                        <input
-                          type="checkbox"
-                          id="active-check"
-                          checked={editActive}
-                          onChange={(e) => setEditActive(e.target.checked)}
-                          className="rounded border-zinc-800 bg-zinc-950 text-yellow-500 focus:ring-0 h-4 w-4"
-                        />
-                        <label htmlFor="active-check" className="text-xs text-zinc-300 font-bold select-none cursor-pointer">Active</label>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 pt-1">
-                      <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">
-                        Commission ({editCommissionPct}%)
-                      </label>
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        step={5}
-                        value={editCommissionPct}
-                        onChange={(e) => setEditCommissionPct(parseInt(e.target.value))}
-                        className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
-                      />
-                    </div>
-
-                    <div className="flex gap-2 justify-end pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setEditingId(null)}
-                        className="py-1.5 px-3 rounded-lg border border-zinc-800 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="py-1.5 px-3 rounded-lg bg-yellow-500 text-black text-xs font-bold hover:bg-yellow-400"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </form>
-                );
-              }
-
-              return (
-                <div
-                  key={barber.id}
-                  onClick={() => handleStartEdit(barber)}
-                  className="flex items-center justify-between border border-zinc-900 bg-zinc-900/30 rounded-2xl p-4 transition-all hover:bg-zinc-900/40 cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-sm text-yellow-500 font-display">
-                      {barber.fullName.charAt(0)}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm text-white flex items-center gap-2">
-                        {barber.fullName}
-                        {!barber.active && (
-                          <span className="text-[8px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-black">Inactive</span>
-                        )}
-                      </span>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-zinc-500 mt-0.5 font-semibold font-mono">
-                        <span className="flex items-center gap-1">
-                          <Phone className="h-3 w-3 text-zinc-650" /> {barber.phone}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Landmark className="h-3 w-3 text-zinc-650" /> {barber.commissionPct}%
-                        </span>
-                        <span className="flex items-center gap-1 text-yellow-550">
-                          <Lock className="h-3 w-3 text-yellow-600/70" /> PIN: <span className="font-bold text-yellow-500">{barber.pin || 'None'}</span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleShare(barber);
-                      }}
-                      className="p-2 rounded-lg border border-zinc-855 bg-zinc-950 text-zinc-450 hover:bg-zinc-900 hover:text-white transition-all active:scale-95 cursor-pointer animate-none"
-                      title="Share Credentials"
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 text-yellow-500 animate-spin" />
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-3">Loading staff...</span>
+              </div>
+            ) : barbers.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-zinc-800 rounded-2xl">
+                <span className="text-xs text-zinc-500">No barbers registered yet.</span>
+              </div>
+            ) : (
+              barbers.map((barber) => {
+                const isEditing = editingId === barber.id;
+                
+                if (isEditing) {
+                  return (
+                    <form 
+                      key={barber.id} 
+                      onSubmit={handleSaveEdit}
+                      className="border border-yellow-500/30 bg-zinc-900/50 p-4 rounded-2xl space-y-3"
                     >
-                      <Share2 className="h-3.5 w-3.5" />
-                    </button>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Name</label>
+                          <input
+                            type="text"
+                            required
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3.5 text-xs text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Phone</label>
+                          <input
+                            type="tel"
+                            required
+                            value={editPhone}
+                            onChange={(e) => setEditPhone(e.target.value)}
+                            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3.5 text-xs text-white font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Access PIN</label>
+                          <input
+                            type="text"
+                            maxLength={4}
+                            value={editPin}
+                            onChange={(e) => setEditPin(e.target.value.replace(/\D/g, ''))}
+                            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3.5 text-xs text-white font-mono"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 pt-3">
+                          <input
+                            type="checkbox"
+                            id="active-check"
+                            checked={editActive}
+                            onChange={(e) => setEditActive(e.target.checked)}
+                            className="rounded border-zinc-800 bg-zinc-950 text-yellow-500 focus:ring-0 h-4 w-4"
+                          />
+                          <label htmlFor="active-check" className="text-xs text-zinc-300 font-bold select-none cursor-pointer">Active</label>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 pt-1">
+                        <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">
+                          Commission ({editCommissionPct}%)
+                        </label>
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          step={5}
+                          value={editCommissionPct}
+                          onChange={(e) => setEditCommissionPct(parseInt(e.target.value))}
+                          className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                        />
+                      </div>
+
+                      <div className="flex gap-2 justify-end pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditingId(null)}
+                          className="py-1.5 px-3 rounded-lg border border-zinc-800 text-zinc-400 text-xs font-semibold hover:bg-zinc-800 hover:text-white"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="py-1.5 px-3 rounded-lg bg-yellow-500 text-black text-xs font-bold hover:bg-yellow-400"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </form>
+                  );
+                }
+
+                return (
+                  <div
+                    key={barber.id}
+                    onClick={() => handleStartEdit(barber)}
+                    className="flex items-center justify-between border border-zinc-900 bg-zinc-900/30 rounded-2xl p-4 transition-all hover:bg-zinc-900/40 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-sm text-yellow-500 font-display">
+                        {barber.fullName.charAt(0)}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm text-white flex items-center gap-2">
+                          {barber.fullName}
+                          {!barber.active && (
+                            <span className="text-[8px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-black">Inactive</span>
+                          )}
+                        </span>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-zinc-500 mt-0.5 font-semibold font-mono">
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3 w-3 text-zinc-650" /> {barber.phone}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Landmark className="h-3 w-3 text-zinc-650" /> {barber.commissionPct}%
+                          </span>
+                          <span className="flex items-center gap-1 text-yellow-550">
+                            <Lock className="h-3 w-3 text-yellow-600/70" /> PIN: <span className="font-bold text-yellow-500">{barber.pin || 'None'}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShare(barber);
+                        }}
+                        className="p-2 rounded-lg border border-zinc-855 bg-zinc-950 text-zinc-450 hover:bg-zinc-900 hover:text-white transition-all active:scale-95 cursor-pointer animate-none"
+                        title="Share Credentials"
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>

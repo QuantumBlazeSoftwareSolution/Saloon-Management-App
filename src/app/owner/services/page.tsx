@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
-import { Briefcase, Plus, Tag, DollarSign, Check, ShieldAlert } from 'lucide-react';
+import { Briefcase, Plus, Tag, DollarSign, Check, ShieldAlert, Loader2 } from 'lucide-react';
 import { getAllServices, createService, updateService } from '@/lib/actions/services';
 
 export default function OwnerServicesPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
   const [services, setServices] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [name, setName] = useState('');
   const [priceStr, setPriceStr] = useState('');
@@ -22,9 +23,14 @@ export default function OwnerServicesPage() {
 
   const fetchServices = async () => {
     if (!currentProfile) return;
-    const res = await getAllServices(false);
-    if (res.success && res.data) {
-      setServices(res.data);
+    setIsLoading(true);
+    try {
+      const res = await getAllServices(false);
+      if (res.success && res.data) {
+        setServices(res.data);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -170,97 +176,108 @@ export default function OwnerServicesPage() {
           </div>
 
           <div className="space-y-2">
-            {services.map((service) => {
-              const isEditing = editingId === service.id;
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 text-yellow-500 animate-spin" />
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-3">Loading services...</span>
+              </div>
+            ) : services.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-zinc-800 rounded-2xl">
+                <span className="text-xs text-zinc-500">No services in menu catalog.</span>
+              </div>
+            ) : (
+              services.map((service) => {
+                const isEditing = editingId === service.id;
 
-              if (isEditing) {
+                if (isEditing) {
+                  return (
+                    <form
+                      key={service.id}
+                      onSubmit={handleSaveEdit}
+                      className="border border-yellow-500/30 bg-zinc-900/50 p-4 rounded-2xl space-y-3"
+                    >
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Service Title</label>
+                          <input
+                            type="text"
+                            required
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3 text-xs text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Price (Rs.)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            required
+                            value={editPriceStr}
+                            onChange={(e) => setEditPriceStr(e.target.value)}
+                            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3 text-xs text-white font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center gap-3 py-1">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="serv-active-check"
+                            checked={editActive}
+                            onChange={(e) => setEditActive(e.target.checked)}
+                            className="rounded border-zinc-800 bg-zinc-950 text-yellow-500 focus:ring-0 h-4 w-4"
+                          />
+                          <label htmlFor="serv-active-check" className="text-xs text-zinc-355 font-bold select-none cursor-pointer">Menu Active</label>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(null)}
+                            className="py-1.5 px-3 rounded-lg border border-zinc-800 text-zinc-455 text-xs font-semibold hover:bg-zinc-800 hover:text-white"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="py-1.5 px-3 rounded-lg bg-yellow-500 text-black text-xs font-bold hover:bg-yellow-400"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  );
+                }
+
                 return (
-                  <form
+                  <div
                     key={service.id}
-                    onSubmit={handleSaveEdit}
-                    className="border border-yellow-500/30 bg-zinc-900/50 p-4 rounded-2xl space-y-3"
+                    onClick={() => handleStartEdit(service)}
+                    className="flex items-center justify-between border border-zinc-900 bg-zinc-900/30 rounded-2xl p-4 transition-all hover:bg-zinc-900/40 cursor-pointer"
                   >
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Service Title</label>
-                        <input
-                          type="text"
-                          required
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3 text-xs text-white"
-                        />
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                        <Tag className="h-4.5 w-4.5 text-yellow-500" />
                       </div>
-                      <div>
-                        <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1">Price (Rs.)</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          required
-                          value={editPriceStr}
-                          onChange={(e) => setEditPriceStr(e.target.value)}
-                          className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 px-3 text-xs text-white font-mono"
-                        />
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm text-white flex items-center gap-2">
+                          {service.name}
+                          {!service.active && (
+                            <span className="text-[8px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-black">Disabled</span>
+                          )}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 mt-0.5 font-bold font-mono">
+                          Base Rate: Rs. {service.basePrice.toFixed(2)}
+                        </span>
                       </div>
-                    </div>
-
-                    <div className="flex justify-between items-center gap-3 py-1">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="serv-active-check"
-                          checked={editActive}
-                          onChange={(e) => setEditActive(e.target.checked)}
-                          className="rounded border-zinc-800 bg-zinc-950 text-yellow-500 focus:ring-0 h-4 w-4"
-                        />
-                        <label htmlFor="serv-active-check" className="text-xs text-zinc-355 font-bold select-none cursor-pointer">Menu Active</label>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className="py-1.5 px-3 rounded-lg border border-zinc-800 text-zinc-450 text-xs font-semibold hover:bg-zinc-800 hover:text-white"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="py-1.5 px-3 rounded-lg bg-yellow-500 text-black text-xs font-bold hover:bg-yellow-400"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                );
-              }
-
-              return (
-                <div
-                  key={service.id}
-                  onClick={() => handleStartEdit(service)}
-                  className="flex items-center justify-between border border-zinc-900 bg-zinc-900/30 rounded-2xl p-4 transition-all hover:bg-zinc-900/40 cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-                      <Tag className="h-4.5 w-4.5 text-yellow-500" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm text-white flex items-center gap-2">
-                        {service.name}
-                        {!service.active && (
-                          <span className="text-[8px] uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 font-black">Disabled</span>
-                        )}
-                      </span>
-                      <span className="text-[10px] text-zinc-500 mt-0.5 font-bold font-mono">
-                        Base Rate: Rs. {service.basePrice.toFixed(2)}
-                      </span>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>
