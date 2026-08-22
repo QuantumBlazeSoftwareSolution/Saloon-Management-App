@@ -35,7 +35,7 @@ export default function BarberLayout({ children }: { children: React.ReactNode }
 
   const tabs = [
     { id: '/barber', label: 'Add Service', icon: Scissors },
-    { id: '/barber/history', label: 'History', icon: History },
+    { id: '/barber/history', label: 'Appointments', icon: History },
     { id: '/barber/earnings', label: 'Earnings', icon: Landmark },
     { id: '/barber/profile', label: 'Profile', icon: User },
   ];
