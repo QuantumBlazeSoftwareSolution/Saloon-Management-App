@@ -39,12 +39,12 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     healProfile();
   }, [currentProfile, authRole, _hasHydrated, router]);
 
-  // Simulate other barbers logging services in real-time
+  
   useEffect(() => {
     if (!_hasHydrated || !currentProfile || authRole !== 'owner') return;
 
     const interval = setInterval(() => {
-      // 30% chance every 15 seconds to simulate a barber logging a service
+      
       if (Math.random() < 0.35 && services.length > 0 && profiles.length > 0) {
         const randomBarber = profiles[Math.floor(Math.random() * profiles.length)];
         const randomService = services[Math.floor(Math.random() * services.length)];
@@ -79,7 +79,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950 pb-20 pt-safe lg:pb-0 lg:pl-64">
-      {/* Desktop Sidebar Rail */}
+      {}
       <aside className="hidden lg:flex flex-col justify-between fixed top-0 bottom-0 left-0 w-64 bg-zinc-900 border-r border-zinc-800 p-6 z-40">
         <div className="space-y-8">
           <div>
@@ -120,7 +120,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {}
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-6 lg:py-8 lg:px-8">
         <motion.div
           key={pathname}
@@ -133,7 +133,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         </motion.div>
       </main>
 
-      {/* Mobile Bottom Navigation Bar */}
+      {}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-900/90 border-t border-zinc-800 backdrop-blur-md pb-safe">
         <div className="flex items-center justify-around h-16 px-1">
           {tabs.map((tab) => {

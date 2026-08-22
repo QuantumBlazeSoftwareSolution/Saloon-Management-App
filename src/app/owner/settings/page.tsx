@@ -31,7 +31,7 @@ export default function OwnerSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {}
       <div>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold font-display">System Administration</span>
         <h2 className="text-xl font-bold text-white mt-0.5">Control Settings</h2>
@@ -45,7 +45,7 @@ export default function OwnerSettingsPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Salon name configuration */}
+        {}
         <div className="md:col-span-2 border border-zinc-900 bg-zinc-900/20 rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Store className="h-4 w-4 text-yellow-500" />
@@ -75,7 +75,7 @@ export default function OwnerSettingsPage() {
           </form>
         </div>
 
-        {/* Profile Card & Log Out */}
+        {}
         <div className="md:col-span-1 space-y-4">
           <div className="border border-zinc-900 bg-zinc-900/30 rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-3">

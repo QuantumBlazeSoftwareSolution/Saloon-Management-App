@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User phone number already registered' }, { status: 400 });
     }
 
-    // 1. Create Profile
+    
     const profile = await createProfile({
       saloonId: saloonId || null,
       role,
@@ -27,11 +27,11 @@ export async function POST(request: Request) {
       phone,
       email: email || null,
       commissionPct: commissionPct || (role === 'barber' ? 50 : 0),
-      pin: null, // Using hashed password in users table instead
+      pin: null, 
       active: true,
     });
 
-    // 2. Hash Password and Create User Credentials
+    
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await createUser({
       email: email || null,

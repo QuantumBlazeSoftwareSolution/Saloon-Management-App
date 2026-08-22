@@ -40,7 +40,7 @@ export default function OwnerAnalyticsPage() {
     }
   }, [currentProfile, dateFilter]);
 
-  // Filter logs based on selection
+  
   const getFilteredLogs = () => {
     const now = new Date();
     const filterDate = new Date();
@@ -58,7 +58,7 @@ export default function OwnerAnalyticsPage() {
 
   const filteredLogs = getFilteredLogs();
 
-  // Metrics math
+  
   const totalRevenue = filteredLogs.reduce((sum, l) => {
     const discountedPrice = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
     return sum + discountedPrice;
@@ -67,7 +67,7 @@ export default function OwnerAnalyticsPage() {
   const totalCommission = filteredLogs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
   const netEarnings = totalRevenue - totalCommission;
 
-  // 1. Group by Day for Bar & Area Chart
+  
   const getBarChartData = () => {
     const groups: { [key: string]: number } = {};
     const now = new Date();
@@ -95,9 +95,9 @@ export default function OwnerAnalyticsPage() {
       }
       filteredLogs.forEach((l) => {
         const d = new Date(l.createdAt);
-        // Find nearest group step (step of 3 days)
+        
         const dayKey = `${d.getMonth() + 1}/${d.getDate()}`;
-        // fallback match closest key
+        
         const keys = Object.keys(groups);
         let matchedKey = keys[0];
         let minDiff = Infinity;
@@ -114,7 +114,7 @@ export default function OwnerAnalyticsPage() {
         groups[matchedKey] += rev;
       });
     } else {
-      // Monthly steps for past year
+      
       for (let i = 11; i >= 0; i--) {
         const d = new Date();
         d.setMonth(now.getMonth() - i);
@@ -138,7 +138,7 @@ export default function OwnerAnalyticsPage() {
 
   const chartData = getBarChartData();
 
-  // Cumulative Area Chart Data
+  
   let cumulativeSum = 0;
   const areaChartData = chartData.map((d) => {
     cumulativeSum += d.revenue;
@@ -148,7 +148,7 @@ export default function OwnerAnalyticsPage() {
     };
   });
 
-  // 2. Pie chart data: Split by service
+  
   const serviceDistributionMap: { [key: string]: number } = {};
   filteredLogs.forEach((l) => {
     const rev = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
@@ -162,9 +162,9 @@ export default function OwnerAnalyticsPage() {
       value: parseFloat(value.toFixed(0)),
     }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, 5); // top 5 only
+    .slice(0, 5); 
 
-  // 3. Leaderboard for Barbers
+  
   const barberLeaderboardMap: { [key: string]: { name: string; total: number; servicesCount: number } } = {};
   filteredLogs.forEach((l) => {
     const rev = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
@@ -190,14 +190,14 @@ export default function OwnerAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold font-display">Performance Analytics</span>
           <h2 className="text-xl font-bold text-white mt-0.5">Shop Reports</h2>
         </div>
         
-        {/* Date Filter Tabs */}
+        {}
         <div className="flex bg-zinc-900 border border-zinc-800 p-1 rounded-xl w-fit self-start">
           {[
             { id: 'week', label: '7 Days' },
@@ -219,7 +219,7 @@ export default function OwnerAnalyticsPage() {
         </div>
       </div>
 
-      {/* Stats Cards Row */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="border border-zinc-900 bg-zinc-900/30 rounded-xl p-4 flex flex-col justify-between h-24">
           <div className="flex justify-between items-start">
@@ -252,9 +252,9 @@ export default function OwnerAnalyticsPage() {
         </div>
       </div>
 
-      {/* Main Charts Grid */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Revenue Bar Chart */}
+        {}
         <div className="border border-zinc-900 bg-zinc-900/20 rounded-2xl p-4 space-y-4">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-yellow-500" />
@@ -276,7 +276,7 @@ export default function OwnerAnalyticsPage() {
           </div>
         </div>
 
-        {/* Cumulative Area Chart */}
+        {}
         <div className="border border-zinc-900 bg-zinc-900/20 rounded-2xl p-4 space-y-4">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-emerald-500" />
@@ -299,7 +299,7 @@ export default function OwnerAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Service Donut Chart */}
+        {}
         <div className="border border-zinc-900 bg-zinc-900/20 rounded-2xl p-4 flex flex-col justify-between">
           <div className="flex items-center gap-2">
             <PieIcon className="h-4 w-4 text-yellow-500" />
@@ -345,7 +345,7 @@ export default function OwnerAnalyticsPage() {
           </div>
         </div>
 
-        {/* Staff Leaderboards */}
+        {}
         <div className="border border-zinc-900 bg-zinc-900/20 rounded-2xl p-4 flex flex-col justify-between">
           <div className="flex items-center gap-2">
             <Award className="h-4 w-4 text-yellow-500" />

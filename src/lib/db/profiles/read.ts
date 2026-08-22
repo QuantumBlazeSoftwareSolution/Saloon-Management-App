@@ -20,7 +20,7 @@ export async function getProfilesBySaloonId(saloonId: string) {
 
 export async function authenticateProfile(role: 'barber' | 'owner', identifier: string, pin?: string) {
   if (role === 'owner') {
-    // Owner signs in via email or phone
+    
     const result = await db
       .select()
       .from(profilesTable)
@@ -33,7 +33,7 @@ export async function authenticateProfile(role: 'barber' | 'owner', identifier: 
       .limit(1);
     return result[0] || null;
   } else {
-    // Barber signs in via phone + pin
+    
     const conditions = [
       eq(profilesTable.role, 'barber'),
       eq(profilesTable.phone, identifier)

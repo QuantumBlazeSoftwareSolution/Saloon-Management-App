@@ -18,7 +18,7 @@ export interface Profile {
   email?: string;
   role: 'barber' | 'owner';
   avatarUrl?: string;
-  commissionPct: number; // e.g. 50 for 50%
+  commissionPct: number; 
   pin?: string;
   active: boolean;
 }
@@ -34,7 +34,7 @@ export interface ServiceLog {
   commission_pct: number;
   commission_amount: number;
   net_amount: number;
-  created_at: string; // ISO string
+  created_at: string; 
 }
 
 interface SaloonState {
@@ -47,14 +47,14 @@ interface SaloonState {
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   
-  // Actions
+  
   login: (role: 'barber' | 'owner', identifier: string, pin?: string) => boolean;
   logout: () => void;
   logService: (barberId: string, serviceId: string, discountPct: number, customCommissionPct?: number) => void;
   deleteLog: (logId: string) => ServiceLog | null;
   restoreLog: (log: ServiceLog) => void;
   
-  // Admin Actions
+  
   addService: (name: string, basePrice: number) => void;
   updateService: (id: string, name: string, basePrice: number, active: boolean) => void;
   addBarber: (name: string, phone: string, commissionPct: number) => string;
@@ -71,7 +71,7 @@ export const useSaloonStore = create<SaloonState>()(
     (set, get) => ({
       services: DEFAULT_SERVICES,
       profiles: DEFAULT_PROFILES,
-      logs: [], // initialized on client if empty
+      logs: [], 
       currentProfile: null,
       authRole: null,
       saloonName: 'The Sterling Groom',
@@ -90,11 +90,11 @@ export const useSaloonStore = create<SaloonState>()(
           }
         });
 
-        // Fallback: If logging as owner and profile doesn't match default email, mock successfully anyway
+        
         if (!found && role === 'owner') {
           found = state.profiles.find(p => p.role === 'owner') || DEFAULT_PROFILES[0];
         } else if (!found && role === 'barber') {
-          // If phone is not in predefined profiles, dynamically create a barber profile with the specified PIN (or 1234)
+          
           const newId = `p_dyn_${Date.now()}`;
           const newProfile: Profile = {
             id: newId,
@@ -114,7 +114,7 @@ export const useSaloonStore = create<SaloonState>()(
 
         if (found && found.active) {
           set({ currentProfile: found, authRole: role });
-          // Lazy seed logs on first auth if empty
+          
           if (get().logs.length === 0) {
             set({ logs: seedLogs() });
           }

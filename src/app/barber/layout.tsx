@@ -54,7 +54,7 @@ export default function BarberLayout({ children }: { children: React.ReactNode }
         </motion.div>
       </main>
 
-      {/* Persistent Bottom Tab Bar */}
+      {}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-900/90 border-t border-zinc-800 backdrop-blur-md pb-safe">
         <div className="max-w-md mx-auto flex items-center justify-around h-16 px-2">
           {tabs.map((tab) => {
@@ -73,7 +73,7 @@ export default function BarberLayout({ children }: { children: React.ReactNode }
                   {tab.label}
                 </span>
                 
-                {/* Active slider indicator */}
+                {}
                 {isActive && (
                   <motion.div 
                     layoutId="barber-tab-indicator"

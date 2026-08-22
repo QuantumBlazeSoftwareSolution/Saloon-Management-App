@@ -19,13 +19,13 @@ export default function BarberProfilePage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {}
       <div>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold font-display">Barber Account</span>
         <h2 className="text-xl font-bold text-white mt-0.5">My Profile</h2>
       </div>
 
-      {/* Account Info card */}
+      {}
       <div className="border border-zinc-900 bg-zinc-900/30 rounded-2xl p-6 flex flex-col items-center text-center space-y-4">
         {currentProfile?.avatarUrl ? (
           <img 
@@ -47,7 +47,7 @@ export default function BarberProfilePage() {
         </div>
       </div>
 
-      {/* Details list */}
+      {}
       <div className="border border-zinc-900 bg-zinc-900/20 rounded-2xl overflow-hidden divide-y divide-zinc-900">
         <div className="flex items-center gap-3 p-4">
           <Phone className="h-4 w-4 text-zinc-500" />
@@ -74,7 +74,7 @@ export default function BarberProfilePage() {
         </div>
       </div>
 
-      {/* Logout button */}
+      {}
       <button
         onClick={handleLogout}
         className="w-full flex items-center justify-center gap-2 rounded-xl bg-zinc-900 border border-zinc-800 py-3.5 font-bold text-red-400 hover:bg-zinc-800 hover:text-red-300 transition-all active:scale-[0.98] cursor-pointer"

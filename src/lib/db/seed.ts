@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
 
@@ -21,7 +21,7 @@ async function main() {
 
   console.log('Seeding database...');
 
-  // 1. Create Saloon
+  
   const [saloon] = await db
     .insert(saloonsTable)
     .values({
@@ -33,7 +33,7 @@ async function main() {
 
   console.log(`Created saloon: ${saloon.name} (${saloon.id})`);
 
-  // 2. Create Owner Profile
+  
   const [owner] = await db
     .insert(profilesTable)
     .values({
@@ -49,13 +49,13 @@ async function main() {
 
   console.log(`Created owner profile: ${owner.fullName} (${owner.id})`);
 
-  // Update saloon's ownerId to match the owner's profile id
+  
   await db
     .update(saloonsTable)
     .set({ ownerId: owner.id })
     .where(eq(saloonsTable.id, saloon.id));
 
-  // Create Owner User Credentials
+  
   const ownerPasswordHash = await bcrypt.hash('Test@123', 10);
   const [ownerUser] = await db
     .insert(usersTable)
@@ -69,7 +69,7 @@ async function main() {
     .returning();
   console.log(`Created owner user credentials for marcus@saloon.com`);
 
-  // 3. Create Barber Profiles and User Credentials
+  
   const barbersData = [
     { saloonId: saloon.id, role: 'barber', fullName: 'Alex Carter', phone: '0777111222', commissionPct: 60, pin: '1234', active: true },
     { saloonId: saloon.id, role: 'barber', fullName: 'Jordan Finch', phone: '0777333444', commissionPct: 50, pin: '5678', active: true },
@@ -82,7 +82,7 @@ async function main() {
     const [barber] = await db.insert(profilesTable).values(profileVals).returning();
     barbers.push(barber);
     
-    // Hash PIN as password for usersTable
+    
     const pinHash = await bcrypt.hash(pin, 10);
     await db.insert(usersTable).values({
       phone: barber.phone,
@@ -94,7 +94,7 @@ async function main() {
     console.log(`Created barber: ${barber.fullName} (${barber.id}) with PIN: ${pin}`);
   }
 
-  // 4. Create Services Catalog
+  
   const servicesData = [
     { saloonId: saloon.id, name: 'Classic Haircut', basePrice: 1500, active: true },
     { saloonId: saloon.id, name: 'Beard Trim & Detail', basePrice: 1000, active: true },
@@ -110,7 +110,7 @@ async function main() {
     console.log(`Created service: ${service.name} (Rs. ${service.basePrice})`);
   }
 
-  // 5. Generate Past Week Logs
+  
   console.log('Generating service logs over past week...');
   const logsToInsert = [];
   const now = new Date();
@@ -119,7 +119,7 @@ async function main() {
     const date = new Date(now);
     date.setDate(now.getDate() - i);
     
-    // 3 to 6 logs per day
+    
     const logCount = Math.floor(3 + Math.random() * 4);
     for (let j = 0; j < logCount; j++) {
       const barber = barbers[Math.floor(Math.random() * barbers.length)];
@@ -131,7 +131,7 @@ async function main() {
       const netAmount = priceAtTime - discountAmount;
       const commissionAmount = (netAmount * barber.commissionPct) / 100;
 
-      // Set hour randomly
+      
       const logDate = new Date(date);
       logDate.setHours(9 + Math.floor(Math.random() * 9), Math.floor(Math.random() * 60));
 

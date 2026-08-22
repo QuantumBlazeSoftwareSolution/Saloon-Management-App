@@ -40,12 +40,12 @@ export default function AddServicePage() {
   const barberId = currentProfile?.id || '';
   const commissionPct = currentProfile?.commissionPct || 0;
 
-  // Calculate pricing previews
+  
   const basePrice = activeService?.basePrice || 0;
   const discountedPrice = basePrice * (1 - discountPct / 100);
   const estimatedCommission = Number((discountedPrice * (commissionPct / 100)).toFixed(2));
 
-  // Compute Today's metrics for the bottom strip
+  
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayLogs = logs.filter(
@@ -76,13 +76,13 @@ export default function AddServicePage() {
     });
 
     if (res.success) {
-      // Trigger optimistic animation
+      
       setShowSuccess(true);
       
-      // Refresh database metrics
+      
       await fetchDbData();
       
-      // Reset form after a brief duration
+      
       setTimeout(() => {
         setShowSuccess(false);
         setSelectedServiceId('');
@@ -94,7 +94,7 @@ export default function AddServicePage() {
 
   const handleQuickDiscount = (pct: number) => {
     setDiscountPct(pct);
-    setShowDiscountInput(pct === -1); // show manual input if custom selected
+    setShowDiscountInput(pct === -1); 
   };
 
   const handlePctChange = (val: number) => {
@@ -125,7 +125,7 @@ export default function AddServicePage() {
 
   return (
     <div className="space-y-6">
-      {/* Header Greeting */}
+      {}
       <div>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Active Session</span>
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -134,7 +134,7 @@ export default function AddServicePage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Services Grid */}
+        {}
         <div className="space-y-2">
           <label className="block text-zinc-400 text-xs font-semibold uppercase tracking-wider">
             Select Service
@@ -162,7 +162,7 @@ export default function AddServicePage() {
           </div>
         </div>
 
-        {/* Discount Selection */}
+        {}
         {selectedServiceId && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -245,7 +245,7 @@ export default function AddServicePage() {
           </motion.div>
         )}
 
-        {/* Read-Only Commission Details */}
+        {}
         {selectedServiceId && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -266,7 +266,7 @@ export default function AddServicePage() {
           </motion.div>
         )}
 
-        {/* Submit action */}
+        {}
         <button
           type="submit"
           disabled={!selectedServiceId || showSuccess}
@@ -300,7 +300,7 @@ export default function AddServicePage() {
         </button>
       </form>
 
-      {/* Today's running totals strip */}
+      {}
       <div className="border border-zinc-900 bg-zinc-900/30 rounded-xl p-4 flex items-center justify-between">
         <div className="flex flex-col">
           <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Today's Summary</span>

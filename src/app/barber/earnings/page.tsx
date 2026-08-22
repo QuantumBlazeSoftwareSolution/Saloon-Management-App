@@ -23,24 +23,24 @@ export default function BarberEarningsPage() {
     fetchLogs();
   }, [barberId]);
 
-  // Math totals
+  
   const totalCommission = logs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
   const totalServicesCount = logs.length;
 
-  // Weekly filter (past 7 days)
+  
   const now = new Date();
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(now.getDate() - 7);
   const weeklyLogs = logs.filter(l => new Date(l.createdAt) >= sevenDaysAgo);
   const weeklyCommission = weeklyLogs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
 
-  // Monthly filter (past 30 days)
+  
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(now.getDate() - 30);
   const monthlyLogs = logs.filter(l => new Date(l.createdAt) >= thirtyDaysAgo);
   const monthlyCommission = monthlyLogs.reduce((sum, l) => sum + Number(l.commissionAmount), 0);
 
-  // Build chart dataset for past 7 days
+  
   const chartData = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(now.getDate() - (6 - i));
@@ -58,13 +58,13 @@ export default function BarberEarningsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {}
       <div>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold font-display">Personal Analytics</span>
         <h2 className="text-xl font-bold text-white mt-0.5">Earnings Dashboard</h2>
       </div>
 
-      {/* Grid Cards */}
+      {}
       <div className="grid grid-cols-2 gap-3">
         <div className="border border-zinc-900 bg-zinc-900/30 rounded-xl p-4 flex flex-col justify-between h-28">
           <div className="flex justify-between items-start">
@@ -89,7 +89,7 @@ export default function BarberEarningsPage() {
         </div>
       </div>
 
-      {/* Chart container */}
+      {}
       <div className="border border-zinc-900 bg-zinc-900/30 rounded-2xl p-4 space-y-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-amber-500" />
@@ -137,7 +137,7 @@ export default function BarberEarningsPage() {
         </div>
       </div>
 
-      {/* Stats summary banner */}
+      {}
       <div className="border border-zinc-900 bg-zinc-900/20 rounded-xl p-4 flex items-center justify-between">
         <div className="flex flex-col gap-0.5">
           <span className="text-zinc-500 text-[10px] uppercase tracking-wider font-semibold">Total Career Services</span>

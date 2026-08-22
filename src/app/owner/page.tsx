@@ -12,20 +12,20 @@ export default function OwnerTodayPage() {
   const [saloonName, setSaloonName] = useState('Sterling Groom');
   const [logs, setLogs] = useState<any[]>([]);
   
-  // Local state to detect new incoming items for highlight flashes
+  
   const [prevLogsCount, setPrevLogsCount] = useState(0);
   const [newLogIds, setNewLogIds] = useState<string[]>([]);
 
   const fetchDbData = async () => {
     if (!currentProfile) return;
     
-    // Fetch saloon details
+    
     const saloonRes = await getSaloonByIdAction(currentProfile.saloonId);
     if (saloonRes.success && saloonRes.data) {
       setSaloonName(saloonRes.data.name);
     }
     
-    // Fetch logs
+    
     const logsRes = await getServiceLogsBySaloonIdAction(currentProfile.saloonId);
     if (logsRes.success && logsRes.data) {
       setLogs(logsRes.data);
@@ -38,7 +38,7 @@ export default function OwnerTodayPage() {
     }
   }, [currentProfile]);
 
-  // Filter logs for today
+  
   const getTodayLogs = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -47,7 +47,7 @@ export default function OwnerTodayPage() {
 
   const todayLogs = getTodayLogs();
   
-  // Calculate stats
+  
   const totalRevenue = todayLogs.reduce((sum, l) => {
     const discountedPrice = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
     return sum + discountedPrice;
@@ -56,7 +56,7 @@ export default function OwnerTodayPage() {
   const totalServices = todayLogs.length;
   const avgTicket = totalServices > 0 ? totalRevenue / totalServices : 0;
 
-  // Find best performing barber today
+  
   const barberPerformance: { [key: string]: { name: string; total: number } } = {};
   todayLogs.forEach((l) => {
     const revenue = Number(l.priceAtTime) * (1 - Number(l.discountPct) / 100);
@@ -75,21 +75,21 @@ export default function OwnerTodayPage() {
     }
   });
 
-  // Sort logs to show latest on top
+  
   const sortedLogs = [...logs].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  // Monitor incoming logs
+  
   useEffect(() => {
     if (logs.length > prevLogsCount) {
-      // Find newly added logs
+      
       const diff = logs.slice(prevLogsCount);
       const ids = diff.map((l) => l.id);
       setNewLogIds((prev) => [...prev, ...ids]);
       setPrevLogsCount(logs.length);
 
-      // Fade out highlight flash after 3 seconds
+      
       const timer = setTimeout(() => {
         setNewLogIds((prev) => prev.filter((id) => !ids.includes(id)));
       }, 3000);
@@ -102,7 +102,7 @@ export default function OwnerTodayPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {}
       <div className="flex justify-between items-center">
         <div>
           <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold font-display">Daily Overview</span>
@@ -114,7 +114,7 @@ export default function OwnerTodayPage() {
         </div>
       </div>
 
-      {/* Main revenue display */}
+      {}
       <div className="border border-zinc-900 bg-zinc-900/30 rounded-2xl p-6 text-center space-y-2 relative overflow-hidden">
         <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-black block">Today's Revenue</span>
         <motion.div

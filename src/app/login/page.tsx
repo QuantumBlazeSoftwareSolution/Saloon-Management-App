@@ -10,7 +10,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col justify-center bg-zinc-950 px-6 py-12 md:px-12">
       <div className="mx-auto w-full max-w-md flex flex-col items-center">
-        {/* Branding header */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -22,9 +22,9 @@ export default function LoginPage() {
           <p className="text-zinc-500 text-sm mt-2">Select your role to access the workspace</p>
         </motion.div>
 
-        {/* Dynamic choice grid */}
+        {}
         <div className="grid grid-cols-1 gap-4 w-full">
-          {/* Barber Portal Card */}
+          {}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -47,7 +47,7 @@ export default function LoginPage() {
             <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           </motion.div>
 
-          {/* Owner Portal Card */}
+          {}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

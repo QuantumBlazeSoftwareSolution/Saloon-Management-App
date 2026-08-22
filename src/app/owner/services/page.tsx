@@ -14,7 +14,7 @@ export default function OwnerServicesPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Editing state
+  
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editPriceStr, setEditPriceStr] = useState('');
@@ -92,7 +92,7 @@ export default function OwnerServicesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {}
       <div>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold font-display">Store Configuration</span>
         <h2 className="text-xl font-bold text-white mt-0.5">Services Menu</h2>
@@ -112,9 +112,9 @@ export default function OwnerServicesPage() {
         </div>
       )}
 
-      {/* Roster management grid */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Add Service Catalog item */}
+        {}
         <div className="md:col-span-1 border border-zinc-900 bg-zinc-900/20 rounded-2xl p-5 space-y-4 h-fit">
           <div className="flex items-center gap-2">
             <Plus className="h-4 w-4 text-yellow-500" />
@@ -163,7 +163,7 @@ export default function OwnerServicesPage() {
           </form>
         </div>
 
-        {/* Active Catalog list */}
+        {}
         <div className="md:col-span-2 space-y-3">
           <div className="flex items-center gap-2 px-1">
             <Briefcase className="h-4 w-4 text-yellow-500" />

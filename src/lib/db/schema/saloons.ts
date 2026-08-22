@@ -3,7 +3,7 @@ import { pgTable, text, timestamp, uuid, integer } from 'drizzle-orm/pg-core';
 export const saloonsTable = pgTable('saloons', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
-  ownerId: text('owner_id').notNull(), // Links to owner profile id
+  ownerId: text('owner_id').notNull(), 
   commissionDefaultPct: integer('commission_default_pct').default(50).notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')

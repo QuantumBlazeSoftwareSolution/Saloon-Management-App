@@ -29,14 +29,14 @@ export default function PwaUpdater() {
     };
   }, []);
 
-  // Show installation sheet once logged in and install prompt is deferred
+  
   useEffect(() => {
     if (!authRole || !deferredPrompt) {
       setShowInstallSheet(false);
       return;
     }
 
-    // Check if dismissed in last 7 days
+    
     const lastDismissed = localStorage.getItem('pwa-install-dismissed');
     if (lastDismissed) {
       const dismissedTime = parseInt(lastDismissed, 10);
@@ -49,7 +49,7 @@ export default function PwaUpdater() {
     setShowInstallSheet(true);
   }, [authRole, deferredPrompt]);
 
-  // Update manifest tag in document head when authRole changes
+  
   useEffect(() => {
     const existingManifest = document.querySelector('link[rel="manifest"]');
     if (existingManifest) {

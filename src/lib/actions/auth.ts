@@ -44,11 +44,11 @@ export async function loginOwnerAction(email: string, password: string) {
       return { success: false, error: 'Invalid email or password.' };
     }
 
-    // Generate and send OTP code
+    
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = new Date(Date.now() + 5 * 60 * 1000);
 
-    // Save to user table in DB
+    
     await db
       .update(usersTable)
       .set({ otp, otpExpires: expiry })
@@ -81,7 +81,7 @@ export async function verifyOwnerOtpAction(email: string, code: string) {
       return { success: false, error: 'Invalid OTP code.' };
     }
 
-    // Clear OTP in DB
+    
     await db
       .update(usersTable)
       .set({ otp: null, otpExpires: null })

@@ -29,11 +29,11 @@ export default function BarberHistoryPage() {
     }
   }, [barberId]);
 
-  // Filter logs for this barber and sort latest first
+  
   const barberLogs = [...logs]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  // Group logs by day
+  
   const groupLogsByDay = (logsList: any[]) => {
     const groups: { [key: string]: any[] } = {};
     
@@ -64,7 +64,7 @@ export default function BarberHistoryPage() {
   const grouped = groupLogsByDay(barberLogs);
 
   const handleDelete = async (logId: string) => {
-    // Clear any pending undo timeouts
+    
     if (undoTimeoutId) {
       clearTimeout(undoTimeoutId);
     }
@@ -81,7 +81,7 @@ export default function BarberHistoryPage() {
       const timeout = setTimeout(() => {
         setShowUndo(false);
         setRecentlyDeleted(null);
-      }, 5000); // 5 seconds grace period
+      }, 5000); 
       
       setUndoTimeoutId(timeout);
     }
@@ -111,7 +111,7 @@ export default function BarberHistoryPage() {
     }
   };
 
-  // Check if log is editable (only same day logs can be deleted)
+  
   const isDeletable = (dateStr: string) => {
     const date = new Date(dateStr);
     const today = new Date();
@@ -120,13 +120,13 @@ export default function BarberHistoryPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {}
       <div>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold font-display">Activity Ledger</span>
         <h2 className="text-xl font-bold text-white mt-0.5">Service History</h2>
       </div>
 
-      {/* Undo Toast */}
+      {}
       <AnimatePresence>
         {showUndo && recentlyDeleted && (
           <motion.div
@@ -155,7 +155,7 @@ export default function BarberHistoryPage() {
         )}
       </AnimatePresence>
 
-      {/* Main List */}
+      {}
       {barberLogs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/10">
           <ShoppingBag className="h-10 w-10 text-zinc-700 stroke-[1.5] mb-3" />

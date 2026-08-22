@@ -15,7 +15,7 @@ export default function OwnerStaffPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Editing state
+  
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
@@ -126,7 +126,7 @@ export default function OwnerStaffPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
+      {}
       <div>
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold font-display">Personnel Management</span>
         <h2 className="text-xl font-bold text-white mt-0.5">Shop Barbers</h2>
@@ -146,9 +146,9 @@ export default function OwnerStaffPage() {
         </div>
       )}
 
-      {/* Grid of Add form vs active staff list */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Add Barber Form */}
+        {}
         <div className="md:col-span-1 space-y-4">
 
           <div className="border border-zinc-900 bg-zinc-900/20 rounded-2xl p-5 space-y-4 h-fit">
@@ -212,7 +212,7 @@ export default function OwnerStaffPage() {
           </div>
         </div>
 
-        {/* Barbers list */}
+        {}
         <div className="md:col-span-2 space-y-3">
           <div className="flex items-center gap-2 px-1">
             <Users className="h-4 w-4 text-yellow-500" />

@@ -39,6 +39,8 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/lib/db/migrate-prog.ts",
+    "src/lib/db/seed.ts"
   ]
 }
