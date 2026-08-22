@@ -1,0 +1,3 @@
+CREATE TYPE "public"."appointment_status_enum" AS ENUM('upcoming', 'completed', 'cancelled', 'no_show');--> statement-breakpoint
+ALTER TABLE "appointments" ALTER COLUMN "status" SET DEFAULT 'upcoming'::"public"."appointment_status_enum";--> statement-breakpoint
+ALTER TABLE "appointments" ALTER COLUMN "status" SET DATA TYPE "public"."appointment_status_enum" USING "status"::"public"."appointment_status_enum";

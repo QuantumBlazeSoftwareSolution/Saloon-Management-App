@@ -8,6 +8,13 @@
       "when": 1787418703901,
       "tag": "0000_clean_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787419229498,
+      "tag": "0001_illegal_sauron",
+      "breakpoints": true
     }
   ]
 }

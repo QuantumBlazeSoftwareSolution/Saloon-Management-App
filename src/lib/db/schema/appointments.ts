@@ -1,6 +1,7 @@
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { profilesTable } from './profiles';
 import { servicesCatalogTable } from './services-catalog';
+import { appointmentStatusEnum } from './enum';
 
 export const appointmentsTable = pgTable('appointments', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -13,7 +14,7 @@ export const appointmentsTable = pgTable('appointments', {
     .references(() => servicesCatalogTable.id, { onDelete: 'cascade' })
     .notNull(),
   scheduledAt: timestamp('scheduled_at').notNull(),
-  status: text('status').default('upcoming').notNull(), 
+  status: appointmentStatusEnum('status').default('upcoming').notNull(),
   notes: text('notes'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });

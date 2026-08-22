@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Calendar, User, Phone, Briefcase, FileText, Loader2 } from 'lucide-react';
+import { X, Calendar, User, Phone, Briefcase, FileText, Loader2, ArrowRight, ArrowLeft, Clock } from 'lucide-react';
 import { getAllServices } from '@/lib/actions/services';
 import { getAllStaff } from '@/lib/actions/profiles';
 import { createAppointment } from '@/lib/actions/appointments';
@@ -21,6 +21,8 @@ export default function BookingModal({
   defaultBarberId = '',
   isOwner,
 }: BookingModalProps) {
+  const [step, setStep] = useState(1);
+
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [selectedServiceId, setSelectedServiceId] = useState('');
@@ -37,6 +39,7 @@ export default function BookingModal({
   useEffect(() => {
     if (!isOpen) return;
 
+    setStep(1);
     const fetchData = async () => {
       setLoading(true);
       setError('');
@@ -69,13 +72,28 @@ export default function BookingModal({
 
   if (!isOpen) return null;
 
+  const canGoToStep2 = () => {
+    if (!customerName.trim() || !customerPhone.trim() || !scheduledAtStr) return false;
+    if (isOwner && !selectedBarberId) return false;
+    return true;
+  };
+
+  const handleNextStep = () => {
+    setError('');
+    if (!canGoToStep2()) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+    setStep(2);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     const barberIdToUse = isOwner ? selectedBarberId : defaultBarberId;
-    if (!customerName || !customerPhone || !selectedServiceId || !barberIdToUse || !scheduledAtStr) {
-      setError('Please fill in all required fields.');
+    if (!selectedServiceId) {
+      setError('Please select a service.');
       return;
     }
 
@@ -97,8 +115,10 @@ export default function BookingModal({
         setCustomerName('');
         setCustomerPhone('');
         setSelectedServiceId('');
+        setSelectedBarberId(defaultBarberId);
         setScheduledAtStr('');
         setNotes('');
+        setStep(1);
       } else {
         setError(res.error || 'Failed to book appointment.');
       }
@@ -109,20 +129,38 @@ export default function BookingModal({
     }
   };
 
+  const scheduledDateDisplay = scheduledAtStr
+    ? new Date(scheduledAtStr).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      })
+    : '';
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center">
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 p-5 shadow-2xl pb-safe">
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3.5 mb-4">
           <div className="flex items-center gap-2">
             <Calendar className={`h-4.5 w-4.5 ${isOwner ? 'text-yellow-500' : 'text-amber-500'}`} />
-            <h3 className="font-bold text-sm text-white">Book Appointment</h3>
+            <h3 className="font-bold text-sm text-white">
+              {step === 1 ? 'Book Appointment' : 'Pick Service'}
+            </h3>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-all"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div className={`h-1.5 w-6 rounded-full transition-all ${step >= 1 ? (isOwner ? 'bg-yellow-500' : 'bg-amber-500') : 'bg-zinc-700'}`} />
+              <div className={`h-1.5 w-6 rounded-full transition-all ${step >= 2 ? (isOwner ? 'bg-yellow-500' : 'bg-amber-500') : 'bg-zinc-700'}`} />
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-all"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -136,8 +174,8 @@ export default function BookingModal({
             <Loader2 className={`h-7 w-7 animate-spin ${isOwner ? 'text-yellow-500' : 'text-amber-500'}`} />
             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-3">Loading catalog...</span>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+        ) : step === 1 ? (
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1.5 flex items-center gap-1">
@@ -172,52 +210,31 @@ export default function BookingModal({
                 <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1.5 flex items-center gap-1">
                   Assign Barber
                 </label>
-                <select
-                  required
-                  value={selectedBarberId}
-                  onChange={(e) => setSelectedBarberId(e.target.value)}
-                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 py-2 px-3 text-xs text-white focus:border-yellow-500 focus:outline-none"
-                >
-                  <option value="">-- Select Barber --</option>
-                  {barbers.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.fullName} ({b.phone})
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap gap-2">
+                  {barbers.map((b) => {
+                    const isSelected = selectedBarberId === b.id;
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => setSelectedBarberId(b.id)}
+                        className={`py-2 px-3.5 rounded-xl text-xs font-bold transition-all border ${
+                          isSelected
+                            ? 'bg-yellow-500 border-yellow-400 text-black'
+                            : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:border-zinc-700'
+                        }`}
+                      >
+                        {b.fullName}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
             <div>
               <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1.5 flex items-center gap-1">
-                <Briefcase className="h-3 w-3" /> Select Service
-              </label>
-              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1.5 bg-zinc-950 rounded-xl border border-zinc-850">
-                {services.map((s) => {
-                  const isSelected = selectedServiceId === s.id;
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => setSelectedServiceId(s.id)}
-                      className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition-all border ${
-                        isSelected
-                          ? isOwner
-                            ? 'bg-yellow-500 border-yellow-400 text-black font-bold'
-                            : 'bg-amber-500 border-amber-400 text-black font-bold'
-                          : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white'
-                      }`}
-                    >
-                      {s.name} - Rs. {s.basePrice}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1.5 flex items-center gap-1">
-                Scheduled Date & Time
+                <Clock className="h-3 w-3" /> Date & Time
               </label>
               <input
                 type="datetime-local"
@@ -228,9 +245,81 @@ export default function BookingModal({
               />
             </div>
 
+            <div className="flex gap-3 pt-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-400 text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all active:scale-[0.98]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-black transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                  isOwner ? 'bg-yellow-500 hover:bg-yellow-400' : 'bg-amber-500 hover:bg-amber-400'
+                }`}
+              >
+                <span>Next</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="p-2.5 rounded-xl bg-zinc-950/50 border border-zinc-850 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`h-7 w-7 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center ${isOwner ? 'text-yellow-500' : 'text-amber-500'} text-[10px] font-black`}>
+                  {customerName.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-white">{customerName}</span>
+                  <span className="text-[10px] text-zinc-500 font-mono">{customerPhone} · {scheduledDateDisplay}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="text-[10px] text-zinc-500 hover:text-white font-bold transition-all flex items-center gap-1"
+              >
+                <ArrowLeft className="h-3 w-3" />
+                Edit
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-2 flex items-center gap-1">
+                <Briefcase className="h-3 w-3" /> Pick Service
+              </label>
+              <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto pr-1">
+                {services.map((s) => {
+                  const isSelected = selectedServiceId === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSelectedServiceId(s.id)}
+                      className={`py-2 px-3.5 rounded-full text-xs font-bold transition-all border ${
+                        isSelected
+                          ? isOwner
+                            ? 'bg-yellow-500 border-yellow-400 text-black shadow-lg shadow-yellow-500/10'
+                            : 'bg-amber-500 border-amber-400 text-black shadow-lg shadow-amber-500/10'
+                          : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:border-zinc-700'
+                      }`}
+                    >
+                      {s.name}
+                      <span className={`ml-1.5 ${isSelected ? 'text-black/60' : 'text-zinc-600'}`}>
+                        Rs. {s.basePrice}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div>
               <label className="block text-zinc-500 text-[9px] uppercase font-bold mb-1.5 flex items-center gap-1">
-                <FileText className="h-3 w-3" /> Booking Notes (Optional)
+                <FileText className="h-3 w-3" /> Notes (Optional)
               </label>
               <textarea
                 value={notes}
@@ -244,16 +333,17 @@ export default function BookingModal({
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={onClose}
-                className="flex-1 py-2.5 px-4 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-400 text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all active:scale-[0.98]"
+                onClick={() => setStep(1)}
+                className="py-2.5 px-4 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-400 text-xs font-bold hover:bg-zinc-800 hover:text-white transition-all active:scale-[0.98] flex items-center gap-1.5"
               >
-                Cancel
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Back</span>
               </button>
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !selectedServiceId}
                 className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-black transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
-                  submitting
+                  submitting || !selectedServiceId
                     ? 'bg-zinc-700 cursor-not-allowed text-zinc-500'
                     : isOwner
                     ? 'bg-yellow-500 hover:bg-yellow-400'
