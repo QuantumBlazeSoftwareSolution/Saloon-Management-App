@@ -8,52 +8,57 @@ import { db } from '../db';
 import { revalidatePath } from 'next/cache';
 import { sendOtpEmail } from '../email';
 import bcrypt from 'bcryptjs';
+import { eq } from 'drizzle-orm';
 
-// Temporary in-memory OTP store for owners
 const ownerOtpCache = new Map<string, { code: string; expires: number }>();
 
 export async function createProfileAction(data: ProfileInsert) {
   try {
     const finalData = { ...data };
     
-    // Generate random 4-digit PIN for barbers if not already specified
     if (finalData.role === 'barber' && !finalData.pin) {
-      const generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
-      finalData.pin = generatedPin;
+      finalData.pin = Math.floor(1000 + Math.random() * 9000).toString();
     }
 
-    const result = await db.transaction(async (tx) => {
-      // 1. Create profile
-      const [profile] = await tx
-        .insert(profilesTable)
-        .values(finalData)
-        .returning();
+    const existingUser = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.phone, finalData.phone))
+      .limit(1);
 
-      // 2. Create corresponding user credentials record
-      const pinToHash = finalData.pin || '1234';
-      const passwordHash = await bcrypt.hash(pinToHash, 10);
-      await tx.insert(usersTable).values({
-        phone: profile.phone,
-        passwordHash,
-        role: profile.role as 'owner' | 'barber',
-        profileId: profile.id,
-        email: profile.email || null,
-      });
+    if (existingUser.length > 0) {
+      return { success: false, error: 'This phone number is already registered.' };
+    }
 
-      return profile;
+    if (finalData.email) {
+      const existingEmail = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.email, finalData.email))
+        .limit(1);
+
+      if (existingEmail.length > 0) {
+        return { success: false, error: 'This email address is already registered.' };
+      }
+    }
+
+    const profile = await createProfile(finalData);
+
+    const pinToHash = finalData.pin || '1234';
+    const passwordHash = await bcrypt.hash(pinToHash, 10);
+    await db.insert(usersTable).values({
+      phone: profile.phone,
+      passwordHash,
+      role: profile.role as 'owner' | 'barber',
+      profileId: profile.id,
+      email: profile.email || null,
     });
 
     revalidatePath('/owner/staff');
-    return { success: true, data: result };
+    return { success: true, data: profile };
   } catch (error: any) {
-    let userMessage = 'Failed to create staff profile.';
-    const errorStr = error.message || '';
-    if (errorStr.includes('users_phone_unique') || errorStr.includes('profiles_phone_unique') || errorStr.includes('duplicate key')) {
-      userMessage = 'This phone number is already registered.';
-    } else if (errorStr.includes('users_email_unique')) {
-      userMessage = 'This email address is already registered.';
-    }
-    return { success: false, error: userMessage };
+    console.error(error);
+    return { success: false, error: 'Failed to create staff profile.' };
   }
 }
 
@@ -77,19 +82,15 @@ export async function authenticateProfileAction(role: 'barber' | 'owner', identi
   }
 }
 
-// Generates and emails a 6-digit OTP code to the owner
 export async function sendOwnerOtpAction(email: string) {
   try {
     const cleanEmail = email.trim().toLowerCase();
     
-    // Generate a 6-digit code
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = Date.now() + 5 * 60 * 1000; // 5 minutes validity
+    const expiry = Date.now() + 5 * 60 * 1000;
 
-    // Store in cache
     ownerOtpCache.set(cleanEmail, { code: otp, expires: expiry });
 
-    // Send email using Nodemailer utility
     await sendOtpEmail(cleanEmail, otp);
 
     return { success: true };
@@ -99,7 +100,6 @@ export async function sendOwnerOtpAction(email: string) {
   }
 }
 
-// Verifies the owner's OTP code
 export async function verifyOwnerOtpAction(email: string, code: string) {
   try {
     const cleanEmail = email.trim().toLowerCase();
@@ -118,10 +118,8 @@ export async function verifyOwnerOtpAction(email: string, code: string) {
       return { success: false, error: 'Invalid verification code.' };
     }
 
-    // Success - clear cache record
     ownerOtpCache.delete(cleanEmail);
 
-    // Call authentication profile retrieval
     const profile = await authenticateProfile('owner', cleanEmail);
     
     return { success: true, data: profile };
