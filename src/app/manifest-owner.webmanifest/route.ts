@@ -12,15 +12,15 @@ export async function GET() {
     orientation: 'portrait',
     icons: [
       {
-        src: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=192&auto=format&fit=crop&q=60',
+        src: '/black-white-barber-logo-design_712567-4529.png',
         sizes: '192x192',
-        type: 'image/jpeg',
+        type: 'image/png',
         purpose: 'any maskable',
       },
       {
-        src: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=512&auto=format&fit=crop&q=60',
+        src: '/black-white-barber-logo-design_712567-4529.png',
         sizes: '512x512',
-        type: 'image/jpeg',
+        type: 'image/png',
       },
     ],
   };
