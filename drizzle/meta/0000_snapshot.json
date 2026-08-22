@@ -1,9 +1,106 @@
 {
-  "id": "ab9bf37d-da5d-4241-bcf0-9d70abbb4ddb",
+  "id": "58d6c39c-b42c-44a7-bf17-bab817cf2c79",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.appointments": {
+      "name": "appointments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "barber_id": {
+          "name": "barber_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_name": {
+          "name": "customer_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_phone": {
+          "name": "customer_phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service_id": {
+          "name": "service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scheduled_at": {
+          "name": "scheduled_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'upcoming'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "appointments_barber_id_profiles_id_fk": {
+          "name": "appointments_barber_id_profiles_id_fk",
+          "tableFrom": "appointments",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "barber_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "appointments_service_id_services_catalog_id_fk": {
+          "name": "appointments_service_id_services_catalog_id_fk",
+          "tableFrom": "appointments",
+          "tableTo": "services_catalog",
+          "columnsFrom": [
+            "service_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.profiles": {
       "name": "profiles",
       "schema": "",
@@ -14,12 +111,6 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
-        },
-        "saloon_id": {
-          "name": "saloon_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
         },
         "role": {
           "name": "role",
@@ -87,73 +178,6 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "profiles_saloon_id_saloons_id_fk": {
-          "name": "profiles_saloon_id_saloons_id_fk",
-          "tableFrom": "profiles",
-          "tableTo": "saloons",
-          "columnsFrom": [
-            "saloon_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.saloons": {
-      "name": "saloons",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "owner_id": {
-          "name": "owner_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "commission_default_pct": {
-          "name": "commission_default_pct",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 50
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -171,12 +195,6 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
-        },
-        "saloon_id": {
-          "name": "saloon_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
         },
         "barber_id": {
           "name": "barber_id",
@@ -238,19 +256,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "service_logs_saloon_id_saloons_id_fk": {
-          "name": "service_logs_saloon_id_saloons_id_fk",
-          "tableFrom": "service_logs",
-          "tableTo": "saloons",
-          "columnsFrom": [
-            "saloon_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "service_logs_barber_id_profiles_id_fk": {
           "name": "service_logs_barber_id_profiles_id_fk",
           "tableFrom": "service_logs",
@@ -295,12 +300,6 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "saloon_id": {
-          "name": "saloon_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "name": {
           "name": "name",
           "type": "text",
@@ -336,21 +335,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "services_catalog_saloon_id_saloons_id_fk": {
-          "name": "services_catalog_saloon_id_saloons_id_fk",
-          "tableFrom": "services_catalog",
-          "tableTo": "saloons",
-          "columnsFrom": [
-            "saloon_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -388,7 +373,8 @@
         },
         "role": {
           "name": "role",
-          "type": "text",
+          "type": "role_enum",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -463,7 +449,16 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.role_enum": {
+      "name": "role_enum",
+      "schema": "public",
+      "values": [
+        "owner",
+        "barber"
+      ]
+    }
+  },
   "schemas": {},
   "sequences": {},
   "roles": {},

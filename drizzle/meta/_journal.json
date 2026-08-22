@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1787320352785,
-      "tag": "0000_mature_sheva_callister",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1787407878645,
-      "tag": "0001_magical_professor_monster",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1787416848069,
-      "tag": "0002_melodic_machine_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1787418457127,
-      "tag": "0003_petite_zuras",
+      "when": 1787418703901,
+      "tag": "0000_clean_centennial",
       "breakpoints": true
     }
   ]

@@ -1,6 +1,18 @@
+CREATE TYPE "public"."role_enum" AS ENUM('owner', 'barber');--> statement-breakpoint
+CREATE TABLE "appointments" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"barber_id" uuid NOT NULL,
+	"customer_name" text NOT NULL,
+	"customer_phone" text NOT NULL,
+	"service_id" uuid NOT NULL,
+	"scheduled_at" timestamp NOT NULL,
+	"status" text DEFAULT 'upcoming' NOT NULL,
+	"notes" text,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "profiles" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"saloon_id" uuid,
 	"role" text NOT NULL,
 	"full_name" text NOT NULL,
 	"phone" text NOT NULL,
@@ -13,18 +25,8 @@ CREATE TABLE "profiles" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "saloons" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"name" text NOT NULL,
-	"owner_id" text NOT NULL,
-	"commission_default_pct" integer DEFAULT 50 NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "service_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"saloon_id" uuid,
 	"barber_id" uuid NOT NULL,
 	"service_id" uuid NOT NULL,
 	"price_at_time" real NOT NULL,
@@ -38,7 +40,6 @@ CREATE TABLE "service_logs" (
 --> statement-breakpoint
 CREATE TABLE "services_catalog" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"saloon_id" uuid,
 	"name" text NOT NULL,
 	"base_price" real NOT NULL,
 	"active" boolean DEFAULT true NOT NULL,
@@ -51,7 +52,7 @@ CREATE TABLE "users" (
 	"email" text,
 	"phone" text NOT NULL,
 	"password_hash" text NOT NULL,
-	"role" text NOT NULL,
+	"role" "role_enum" NOT NULL,
 	"profile_id" uuid NOT NULL,
 	"otp" text,
 	"otp_expires" timestamp,
@@ -61,9 +62,8 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_phone_unique" UNIQUE("phone")
 );
 --> statement-breakpoint
-ALTER TABLE "profiles" ADD CONSTRAINT "profiles_saloon_id_saloons_id_fk" FOREIGN KEY ("saloon_id") REFERENCES "public"."saloons"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "service_logs" ADD CONSTRAINT "service_logs_saloon_id_saloons_id_fk" FOREIGN KEY ("saloon_id") REFERENCES "public"."saloons"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "appointments" ADD CONSTRAINT "appointments_barber_id_profiles_id_fk" FOREIGN KEY ("barber_id") REFERENCES "public"."profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "appointments" ADD CONSTRAINT "appointments_service_id_services_catalog_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."services_catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "service_logs" ADD CONSTRAINT "service_logs_barber_id_profiles_id_fk" FOREIGN KEY ("barber_id") REFERENCES "public"."profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "service_logs" ADD CONSTRAINT "service_logs_service_id_services_catalog_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."services_catalog"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "services_catalog" ADD CONSTRAINT "services_catalog_saloon_id_saloons_id_fk" FOREIGN KEY ("saloon_id") REFERENCES "public"."saloons"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_profile_id_profiles_id_fk" FOREIGN KEY ("profile_id") REFERENCES "public"."profiles"("id") ON DELETE cascade ON UPDATE no action;
