@@ -26,17 +26,33 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
       return;
     }
 
-    const healProfile = async () => {
-      if (!currentProfile.saloonId) {
-        const { checkAndHealSaloonAction } = await import('@/lib/actions/profiles');
-        const res = await checkAndHealSaloonAction(currentProfile.id);
-        if (res.success && res.profile) {
-          useSaloonStore.setState({ currentProfile: res.profile as any });
+    const syncAndHealProfile = async () => {
+      console.log(`[OwnerLayout] Syncing profile for owner: ${currentProfile.fullName} (${currentProfile.id})`);
+      const { getProfileByIdAction, checkAndHealSaloonAction } = await import('@/lib/actions/profiles');
+      
+      const syncRes = await getProfileByIdAction(currentProfile.id);
+      let activeProfile = currentProfile;
+      if (syncRes.success && syncRes.data) {
+        activeProfile = syncRes.data as any;
+        if (activeProfile.saloonId !== currentProfile.saloonId) {
+          console.log(`[OwnerLayout] Saloon ID updated from DB: ${activeProfile.saloonId}`);
+          useSaloonStore.setState({ currentProfile: activeProfile });
+        }
+      }
+
+      if (!activeProfile.saloonId) {
+        console.log(`[OwnerLayout] Saloon ID missing. Running auto-heal...`);
+        const healRes = await checkAndHealSaloonAction(activeProfile.id);
+        if (healRes.success && healRes.profile) {
+          console.log(`[OwnerLayout] Auto-heal succeeded. Linked saloon ID: ${healRes.profile.saloonId}`);
+          useSaloonStore.setState({ currentProfile: healRes.profile as any });
+        } else {
+          console.error(`[OwnerLayout] Auto-heal failed: ${healRes.error}`);
         }
       }
     };
 
-    healProfile();
+    syncAndHealProfile();
   }, [currentProfile, authRole, _hasHydrated, router]);
 
   

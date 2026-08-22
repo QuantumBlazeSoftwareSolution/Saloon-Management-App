@@ -187,3 +187,51 @@ export async function checkAndHealSaloonAction(profileId: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function getAllStaff(saloonId: string) {
+  console.log(`[getAllStaff] Fetching staff for saloonId: ${saloonId}`);
+  try {
+    const res = await getProfilesBySaloonIdAction(saloonId);
+    if (res.success) {
+      console.log(`[getAllStaff] Success: fetched ${res.data?.length || 0} profiles`);
+    } else {
+      console.error(`[getAllStaff] Failure: ${res.error}`);
+    }
+    return res;
+  } catch (error: any) {
+    console.error(`[getAllStaff] Error: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function createStaff(data: ProfileInsert) {
+  console.log(`[createStaff] Attempting to create staff profile: ${data.fullName}`);
+  try {
+    const res = await createProfileAction(data);
+    if (res.success) {
+      console.log(`[createStaff] Success: created profile ${res.data?.id}`);
+    } else {
+      console.error(`[createStaff] Failure: ${res.error}`);
+    }
+    return res;
+  } catch (error: any) {
+    console.error(`[createStaff] Error: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateStaff(id: string, data: Partial<ProfileInsert>) {
+  console.log(`[updateStaff] Attempting to update profile: ${id}`);
+  try {
+    const res = await updateProfileAction(id, data);
+    if (res.success) {
+      console.log(`[updateStaff] Success: updated profile ${res.data?.id}`);
+    } else {
+      console.error(`[updateStaff] Failure: ${res.error}`);
+    }
+    return res;
+  } catch (error: any) {
+    console.error(`[updateStaff] Error: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}

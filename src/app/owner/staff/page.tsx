@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
 import { Users, UserPlus, Phone, Landmark, Check, ShieldAlert, Lock, Copy, Share2 } from 'lucide-react';
-import { getProfilesBySaloonIdAction, createProfileAction, updateProfileAction } from '@/lib/actions/profiles';
+import { getAllStaff, createStaff, updateStaff } from '@/lib/actions/profiles';
 
 export default function OwnerStaffPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
@@ -25,7 +25,7 @@ export default function OwnerStaffPage() {
 
   const fetchProfiles = async () => {
     if (!currentProfile) return;
-    const res = await getProfilesBySaloonIdAction(currentProfile.saloonId);
+    const res = await getAllStaff(currentProfile.saloonId);
     if (res.success && res.data) {
       setProfiles(res.data);
     }
@@ -70,7 +70,7 @@ export default function OwnerStaffPage() {
     }
 
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
-    const res = await createProfileAction({
+    const res = await createStaff({
       saloonId: currentProfile.saloonId,
       role: 'barber',
       fullName: name,
@@ -105,7 +105,7 @@ export default function OwnerStaffPage() {
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingId) {
-      const res = await updateProfileAction(editingId, {
+      const res = await updateStaff(editingId, {
         fullName: editName,
         phone: editPhone,
         commissionPct: editCommissionPct,
