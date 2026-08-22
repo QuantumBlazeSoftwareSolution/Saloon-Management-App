@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSaloonStore } from '@/store';
-import { Users, UserPlus, Phone, Landmark, Check, ShieldAlert, Lock, Copy } from 'lucide-react';
+import { Users, UserPlus, Phone, Landmark, Check, ShieldAlert, Lock, Copy, Share2 } from 'lucide-react';
 import { getProfilesBySaloonIdAction, createProfileAction, updateProfileAction } from '@/lib/actions/profiles';
 
 export default function OwnerStaffPage() {
@@ -14,10 +14,6 @@ export default function OwnerStaffPage() {
   const [commissionPct, setCommissionPct] = useState(50);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
-  // Newly created barber highlight
-  const [newBarberPin, setNewBarberPin] = useState('');
-  const [newBarberName, setNewBarberName] = useState('');
 
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -43,6 +39,24 @@ export default function OwnerStaffPage() {
 
   const barbers = profiles.filter((p) => p.role === 'barber');
 
+  const handleShare = async (b: any) => {
+    const loginLink = `${window.location.origin}/login`;
+    const shareText = `Hi ${b.fullName},\n\nHere are your credentials for The Sterling Groom:\nPhone: ${b.phone}\nPIN: ${b.pin || '1234'}\n\nLogin here: ${loginLink}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Barber Access Credentials',
+          text: shareText,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      alert('Credentials copied to clipboard!');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone || !currentProfile) {
@@ -50,7 +64,6 @@ export default function OwnerStaffPage() {
       return;
     }
     
-    // Check if phone already registered
     if (profiles.some((p) => p.phone === phone)) {
       setError('This phone number is already registered.');
       return;
@@ -68,14 +81,13 @@ export default function OwnerStaffPage() {
     });
 
     if (res.success) {
-      setNewBarberName(name);
-      setNewBarberPin(pin);
       setSuccess('Barber added successfully!');
       setName('');
       setPhone('');
       setCommissionPct(50);
       setError('');
       await fetchProfiles();
+      setTimeout(() => setSuccess(''), 3000);
     } else {
       setError(res.error || 'Failed to add barber');
     }
@@ -120,7 +132,7 @@ export default function OwnerStaffPage() {
         <h2 className="text-xl font-bold text-white mt-0.5">Shop Barbers</h2>
       </div>
 
-      {success && !newBarberPin && (
+      {success && (
         <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-emerald-400 text-xs">
           <Check className="h-4 w-4" />
           <span>{success}</span>
@@ -138,39 +150,6 @@ export default function OwnerStaffPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Add Barber Form */}
         <div className="md:col-span-1 space-y-4">
-          {/* Newly created Barber credential banner */}
-          {newBarberPin && (
-            <div className="border-2 border-yellow-500 bg-yellow-500/10 rounded-2xl p-5 space-y-3 relative overflow-hidden">
-              <span className="text-[9px] uppercase tracking-widest font-black text-yellow-500 block">Important: Roster Credentials</span>
-              <h4 className="font-extrabold text-sm text-white">Share credentials with {newBarberName}</h4>
-              
-              <div className="bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Barber PIN</span>
-                  <div className="flex items-center gap-1">
-                    <span className="font-mono text-white font-extrabold text-base select-all">{newBarberPin}</span>
-                    <button 
-                      onClick={() => navigator.clipboard.writeText(newBarberPin)}
-                      className="p-1 text-zinc-550 hover:text-white transition-colors"
-                      title="Copy PIN"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setNewBarberPin('');
-                  setNewBarberName('');
-                  setSuccess('');
-                }}
-                className="w-full py-2 px-3 bg-yellow-500 hover:bg-yellow-400 font-bold text-black text-xs rounded-lg active:scale-95 transition-all"
-              >
-                Acknowledge PIN
-              </button>
-            </div>
-          )}
 
           <div className="border border-zinc-900 bg-zinc-900/20 rounded-2xl p-5 space-y-4 h-fit">
             <div className="flex items-center gap-2">
@@ -361,12 +340,21 @@ export default function OwnerStaffPage() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleStartEdit(barber)}
-                    className="py-1.5 px-3 rounded-lg border border-zinc-855 bg-zinc-950 text-zinc-400 text-xs font-bold hover:bg-zinc-900 hover:text-white transition-all active:scale-95 cursor-pointer"
-                  >
-                    Edit
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleShare(barber)}
+                      className="p-2 rounded-lg border border-zinc-855 bg-zinc-950 text-zinc-450 hover:bg-zinc-900 hover:text-white transition-all active:scale-95 cursor-pointer animate-none"
+                      title="Share Credentials"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleStartEdit(barber)}
+                      className="py-1.5 px-3 rounded-lg border border-zinc-855 bg-zinc-950 text-zinc-400 text-xs font-bold hover:bg-zinc-900 hover:text-white transition-all active:scale-95 cursor-pointer animate-none"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
               );
             })}
