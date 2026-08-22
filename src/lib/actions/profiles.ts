@@ -2,7 +2,7 @@
 
 import { createProfile, updateProfile } from '../db/profiles/write';
 import { getProfileById, getProfilesBySaloonId, authenticateProfile } from '../db/profiles/read';
-import { ProfileInsert } from '../db/schema/profiles';
+import { profilesTable, ProfileInsert } from '../db/schema/profiles';
 import { usersTable } from '../db/schema/users';
 import { db } from '../db';
 import { revalidatePath } from 'next/cache';
@@ -22,23 +22,38 @@ export async function createProfileAction(data: ProfileInsert) {
       finalData.pin = generatedPin;
     }
 
-    const profile = await createProfile(finalData);
+    const result = await db.transaction(async (tx) => {
+      // 1. Create profile
+      const [profile] = await tx
+        .insert(profilesTable)
+        .values(finalData)
+        .returning();
 
-    // Create corresponding user credentials record
-    const pinToHash = finalData.pin || '1234';
-    const passwordHash = await bcrypt.hash(pinToHash, 10);
-    await db.insert(usersTable).values({
-      phone: profile.phone,
-      passwordHash,
-      role: profile.role as 'owner' | 'barber',
-      profileId: profile.id,
-      email: profile.email || null,
+      // 2. Create corresponding user credentials record
+      const pinToHash = finalData.pin || '1234';
+      const passwordHash = await bcrypt.hash(pinToHash, 10);
+      await tx.insert(usersTable).values({
+        phone: profile.phone,
+        passwordHash,
+        role: profile.role as 'owner' | 'barber',
+        profileId: profile.id,
+        email: profile.email || null,
+      });
+
+      return profile;
     });
 
     revalidatePath('/owner/staff');
-    return { success: true, data: profile };
+    return { success: true, data: result };
   } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to create profile.' };
+    let userMessage = 'Failed to create staff profile.';
+    const errorStr = error.message || '';
+    if (errorStr.includes('users_phone_unique') || errorStr.includes('profiles_phone_unique') || errorStr.includes('duplicate key')) {
+      userMessage = 'This phone number is already registered.';
+    } else if (errorStr.includes('users_email_unique')) {
+      userMessage = 'This email address is already registered.';
+    }
+    return { success: false, error: userMessage };
   }
 }
 
