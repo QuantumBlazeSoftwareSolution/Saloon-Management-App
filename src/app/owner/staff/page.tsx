@@ -312,7 +312,8 @@ export default function OwnerStaffPage() {
               return (
                 <div
                   key={barber.id}
-                  className="flex items-center justify-between border border-zinc-900 bg-zinc-900/30 rounded-2xl p-4 transition-all hover:bg-zinc-900/40"
+                  onClick={() => handleStartEdit(barber)}
+                  className="flex items-center justify-between border border-zinc-900 bg-zinc-900/30 rounded-2xl p-4 transition-all hover:bg-zinc-900/40 cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-sm text-yellow-500 font-display">
@@ -341,17 +342,14 @@ export default function OwnerStaffPage() {
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleShare(barber)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShare(barber);
+                      }}
                       className="p-2 rounded-lg border border-zinc-855 bg-zinc-950 text-zinc-450 hover:bg-zinc-900 hover:text-white transition-all active:scale-95 cursor-pointer animate-none"
                       title="Share Credentials"
                     >
                       <Share2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleStartEdit(barber)}
-                      className="py-1.5 px-3 rounded-lg border border-zinc-855 bg-zinc-950 text-zinc-400 text-xs font-bold hover:bg-zinc-900 hover:text-white transition-all active:scale-95 cursor-pointer animate-none"
-                    >
-                      Edit
                     </button>
                   </div>
                 </div>
