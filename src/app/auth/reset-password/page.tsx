@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ShieldAlert, Key, CheckCircle, Loader2 } from 'lucide-react';
 import { resetPasswordAction } from '@/lib/actions/auth';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -144,5 +144,18 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500 text-xs font-mono uppercase tracking-widest gap-2">
+        <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+        <span>Loading setup secure session...</span>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
