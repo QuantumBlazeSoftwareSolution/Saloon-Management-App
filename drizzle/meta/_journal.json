@@ -15,6 +15,13 @@
       "when": 1787449304116,
       "tag": "0001_cuddly_spacker_dave",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787450399249,
+      "tag": "0002_fresh_lyja",
+      "breakpoints": true
     }
   ]
 }

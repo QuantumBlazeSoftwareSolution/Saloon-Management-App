@@ -14,11 +14,12 @@
 
 @layer base {
   html, body {
-    background-color: var(--color-brand-charcoal);
+    background-color: #09090b;
     color: var(--color-brand-light);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    min-height: 100vh;
   }
 
   h1, h2, h3, h4, h5, h6 {
