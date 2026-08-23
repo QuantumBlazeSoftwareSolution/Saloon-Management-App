@@ -105,3 +105,28 @@ export async function createSaloonAndOwner(
     return { success: false, error: 'Failed to create saloon and owner. Please try again.' };
   }
 }
+
+export async function requestSaloonSetup(
+  saloonName: string,
+  ownerEmail: string,
+  ownerPhone: string
+) {
+  console.log(`[requestSaloonSetup] Saloon name: ${saloonName}, Owner email: ${ownerEmail}`);
+  try {
+    const [saloon] = await db
+      .insert(saloonsTable)
+      .values({
+        name: saloonName,
+        ownerEmail: ownerEmail.trim().toLowerCase(),
+        ownerPhone: ownerPhone.trim(),
+        status: 'pending',
+      })
+      .returning();
+
+    console.log(`[requestSaloonSetup] Success: created pending saloon request ${saloon.id}`);
+    return { success: true, data: saloon };
+  } catch (error: any) {
+    console.error(`[requestSaloonSetup] Error: ${error.message}`);
+    return { success: false, error: 'Failed to register saloon request. Please try again.' };
+  }
+}

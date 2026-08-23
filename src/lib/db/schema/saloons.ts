@@ -5,6 +5,8 @@ export const saloonsTable = pgTable("saloons", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   status: saloonStatusEnum("status").notNull().default("pending"),
+  ownerEmail: text("owner_email"),
+  ownerPhone: text("owner_phone"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
     .notNull()

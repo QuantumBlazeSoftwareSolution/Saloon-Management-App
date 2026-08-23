@@ -22,6 +22,13 @@
       "when": 1787450399249,
       "tag": "0002_fresh_lyja",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787451402584,
+      "tag": "0003_early_husk",
+      "breakpoints": true
     }
   ]
 }
