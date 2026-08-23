@@ -4,10 +4,10 @@ import { db } from '../db';
 import { appointmentsTable, AppointmentInsert } from '../db/schema/appointments';
 import { profilesTable } from '../db/schema/profiles';
 import { revalidatePath } from 'next/cache';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and } from 'drizzle-orm';
 
 export async function createAppointment(data: AppointmentInsert) {
-  console.log(`[createAppointment] Booking for: ${data.customerName}, barber: ${data.barberId}, services: ${JSON.stringify(data.serviceIds)}`);
+  console.log(`[createAppointment] Booking for: ${data.customerName}, barber: ${data.barberId}, saloon: ${data.saloonId}, services: ${JSON.stringify(data.serviceIds)}`);
   try {
     const [appointment] = await db
       .insert(appointmentsTable)
@@ -20,7 +20,7 @@ export async function createAppointment(data: AppointmentInsert) {
     return { success: true, data: appointment };
   } catch (error: any) {
     console.error(`[createAppointment] Error: ${error.message}`);
-    return { success: false, error: error.message || 'Failed to create appointment.' };
+    return { success: false, error: 'Failed to book appointment. Please try again.' };
   }
 }
 
@@ -39,13 +39,14 @@ export async function updateAppointment(id: string, data: Partial<AppointmentIns
     return { success: true, data: appointment };
   } catch (error: any) {
     console.error(`[updateAppointment] Error: ${error.message}`);
-    return { success: false, error: error.message || 'Failed to update appointment.' };
+    return { success: false, error: 'Failed to update appointment. Please try again.' };
   }
 }
 
-export async function getAllAppointments() {
-  console.log(`[getAllAppointments] Fetching all appointments`);
+export async function getAllAppointments(saloonId?: string) {
+  console.log(`[getAllAppointments] Fetching all appointments for saloon: ${saloonId}`);
   try {
+    if (!saloonId) return { success: true, data: [] };
     const result = await db
       .select({
         id: appointmentsTable.id,
@@ -61,13 +62,14 @@ export async function getAllAppointments() {
       })
       .from(appointmentsTable)
       .leftJoin(profilesTable, eq(appointmentsTable.barberId, profilesTable.id))
+      .where(eq(appointmentsTable.saloonId, saloonId))
       .orderBy(asc(appointmentsTable.scheduledAt));
 
     console.log(`[getAllAppointments] Success: fetched ${result.length} appointments`);
     return { success: true, data: result };
   } catch (error: any) {
     console.error(`[getAllAppointments] Error: ${error.message}`);
-    return { success: false, error: error.message || 'Failed to fetch appointments.' };
+    return { success: false, error: 'Failed to fetch appointments. Please try again.' };
   }
 }
 
@@ -96,6 +98,6 @@ export async function getBarberAppointments(barberId: string) {
     return { success: true, data: result };
   } catch (error: any) {
     console.error(`[getBarberAppointments] Error: ${error.message}`);
-    return { success: false, error: error.message || 'Failed to fetch barber appointments.' };
+    return { success: false, error: 'Failed to fetch barber appointments. Please try again.' };
   }
 }

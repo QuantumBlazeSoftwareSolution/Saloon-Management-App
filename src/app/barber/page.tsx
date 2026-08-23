@@ -18,8 +18,8 @@ export default function AddServicePage() {
   const [mounted, setMounted] = useState(false);
 
   const fetchDbData = async () => {
-    if (!currentProfile) return;
-    const servicesRes = await getAllServices(true);
+    if (!currentProfile || !currentProfile.saloonId) return;
+    const servicesRes = await getAllServices(true, currentProfile.saloonId);
     if (servicesRes.success && servicesRes.data) {
       setServices(servicesRes.data);
     }
@@ -65,6 +65,7 @@ export default function AddServicePage() {
     const commissionAmount = netAmount * (commissionPct / 100);
 
     const res = await createServiceLog({
+      saloonId: currentProfile.saloonId!,
       barberId,
       serviceId: selectedServiceId,
       priceAtTime,

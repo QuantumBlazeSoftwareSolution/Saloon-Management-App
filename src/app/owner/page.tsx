@@ -32,24 +32,24 @@ export default function OwnerTodayPage() {
   const [pendingAction, setPendingAction] = useState<{ id: string; status: 'cancelled' | 'no_show'; title: string; message: string } | null>(null);
 
   const fetchDbData = async () => {
-    if (!currentProfile) return;
+    if (!currentProfile || !currentProfile.saloonId) return;
     try {
-      const logsRes = await getAllServiceLogs();
+      const logsRes = await getAllServiceLogs(currentProfile.saloonId);
       if (logsRes.success && logsRes.data) {
         setLogs(logsRes.data);
       }
 
-      const appRes = await getAllAppointments();
+      const appRes = await getAllAppointments(currentProfile.saloonId);
       if (appRes.success && appRes.data) {
         setAppointments(appRes.data);
       }
 
-      const barbRes = await getAllStaff();
+      const barbRes = await getAllStaff(currentProfile.saloonId);
       if (barbRes.success && barbRes.data) {
         setBarbers(barbRes.data.filter((p: any) => p.role === 'barber' && p.active));
       }
 
-      const servRes = await getAllServices(true);
+      const servRes = await getAllServices(true, currentProfile.saloonId);
       if (servRes.success && servRes.data) {
         setServices(servRes.data);
       }

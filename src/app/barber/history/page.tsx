@@ -44,7 +44,7 @@ export default function BarberAppointmentsPage() {
       if (appRes.success && appRes.data) {
         setAppointments(appRes.data);
       }
-      const servRes = await getAllServices(true);
+      const servRes = await getAllServices(true, currentProfile?.saloonId);
       if (servRes.success && servRes.data) {
         setServices(servRes.data);
       }
@@ -116,6 +116,7 @@ export default function BarberAppointmentsPage() {
   const handleUndoDeleteLog = async () => {
     if (recentlyDeleted) {
       const res = await createServiceLog({
+        saloonId: currentProfile?.saloonId!,
         barberId: recentlyDeleted.barberId,
         serviceId: recentlyDeleted.serviceId,
         priceAtTime: Number(recentlyDeleted.priceAtTime),
@@ -168,6 +169,7 @@ export default function BarberAppointmentsPage() {
         const commissionAmount = netAmount * (commissionPct / 100);
 
         await createServiceLog({
+          saloonId: currentProfile.saloonId!,
           barberId: currentProfile.id,
           serviceId: service.id,
           priceAtTime,
@@ -288,7 +290,7 @@ export default function BarberAppointmentsPage() {
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 50 }}
-              className="w-full max-w-md overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 p-5 shadow-2xl pb-safe"
+              className="w-full max-w-md overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 p-5 pb-8 shadow-2xl mb-safe"
             >
               <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-4">
                 <h3 className="font-bold text-sm text-white">Complete Appointment</h3>

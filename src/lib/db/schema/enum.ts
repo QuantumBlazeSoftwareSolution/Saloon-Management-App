@@ -1,6 +1,6 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
-export const roleEnumItem = ["owner", "barber"] as const;
+export const roleEnumItem = ["owner", "barber", "admin"] as const;
 export const roleEnum = pgEnum("role_enum", roleEnumItem);
 
 export const appointmentStatusEnumItem = ["upcoming", "completed", "cancelled", "no_show"] as const;

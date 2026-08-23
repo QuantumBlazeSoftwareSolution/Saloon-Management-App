@@ -12,10 +12,11 @@ export interface Service {
 
 export interface Profile {
   id: string;
+  saloonId?: string;
   fullName: string;
   phone: string;
   email?: string;
-  role: 'barber' | 'owner';
+  role: 'barber' | 'owner' | 'admin';
   avatarUrl?: string;
   commissionPct: number; 
   pin?: string;
@@ -41,13 +42,13 @@ interface SaloonState {
   profiles: Profile[];
   logs: ServiceLog[];
   currentProfile: Profile | null;
-  authRole: 'barber' | 'owner' | null;
+  authRole: 'barber' | 'owner' | 'admin' | null;
   saloonName: string;
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   
   
-  login: (role: 'barber' | 'owner', identifier: string, pin?: string) => boolean;
+  login: (role: 'barber' | 'owner' | 'admin', identifier: string, pin?: string) => boolean;
   logout: () => void;
   logService: (barberId: string, serviceId: string, discountPct: number, customCommissionPct?: number) => void;
   deleteLog: (logId: string) => ServiceLog | null;
@@ -84,14 +85,17 @@ export const useSaloonStore = create<SaloonState>()(
         let found = state.profiles.find(p => {
           if (role === 'owner') {
             return p.role === 'owner' && (p.email?.toLowerCase() === cleanedId || p.phone === cleanedId);
+          } else if (role === 'admin') {
+            return p.role === 'admin' && (p.email?.toLowerCase() === cleanedId || p.phone === cleanedId);
           } else {
             return p.role === 'barber' && p.phone === cleanedId && (!pin || p.pin === pin);
           }
         });
 
-        
         if (!found && role === 'owner') {
           found = state.profiles.find(p => p.role === 'owner') || DEFAULT_PROFILES[0];
+        } else if (!found && role === 'admin') {
+          found = state.profiles.find(p => p.role === 'admin');
         } else if (!found && role === 'barber') {
           
           const newId = `p_dyn_${Date.now()}`;

@@ -5,6 +5,7 @@ import { X, Calendar, User, Phone, Briefcase, FileText, Loader2, ArrowRight, Arr
 import { getAllServices } from '@/lib/actions/services';
 import { getAllStaff } from '@/lib/actions/profiles';
 import { createAppointment, updateAppointment } from '@/lib/actions/appointments';
+import { useSaloonStore } from '@/store';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -41,23 +42,29 @@ export default function BookingModal({
   useEffect(() => {
     if (!isOpen) return;
 
+    const currentProfile = useSaloonStore.getState().currentProfile;
     setStep(1);
     const fetchData = async () => {
       setLoading(true);
       setError('');
       try {
-        const servRes = await getAllServices(true);
+        if (!currentProfile || !currentProfile.saloonId) {
+          setError('Saloon profile not found.');
+          setLoading(false);
+          return;
+        }
+        const servRes = await getAllServices(true, currentProfile.saloonId);
         if (servRes.success && servRes.data) {
           setServices(servRes.data);
         }
         if (isOwner) {
-          const barbRes = await getAllStaff();
+          const barbRes = await getAllStaff(currentProfile.saloonId);
           if (barbRes.success && barbRes.data) {
             setBarbers(barbRes.data.filter((p: any) => p.role === 'barber' && p.active));
           }
         }
       } catch (err: any) {
-        setError(err.message || 'Failed to load options.');
+        setError('Failed to load options.');
       } finally {
         setLoading(false);
       }
@@ -70,7 +77,20 @@ export default function BookingModal({
     if (appointmentToEdit) {
       setCustomerName(appointmentToEdit.customerName || '');
       setCustomerPhone(appointmentToEdit.customerPhone || '');
-      setSelectedServiceIds(appointmentToEdit.serviceIds || []);
+      let sIds: string[] = [];
+      if (appointmentToEdit.serviceIds) {
+        if (Array.isArray(appointmentToEdit.serviceIds)) {
+          sIds = appointmentToEdit.serviceIds;
+        } else if (typeof appointmentToEdit.serviceIds === 'string') {
+          try {
+            const parsed = JSON.parse(appointmentToEdit.serviceIds);
+            sIds = Array.isArray(parsed) ? parsed : [appointmentToEdit.serviceIds];
+          } catch {
+            sIds = appointmentToEdit.serviceIds ? [appointmentToEdit.serviceIds] : [];
+          }
+        }
+      }
+      setSelectedServiceIds(sIds);
       setSelectedBarberId(appointmentToEdit.barberId || '');
       if (appointmentToEdit.scheduledAt) {
         const d = new Date(appointmentToEdit.scheduledAt);
@@ -123,6 +143,7 @@ export default function BookingModal({
       return;
     }
 
+    const currentProfile = useSaloonStore.getState().currentProfile;
     setSubmitting(true);
     try {
       let res;
@@ -136,7 +157,13 @@ export default function BookingModal({
           notes: notes || null,
         });
       } else {
+        if (!currentProfile || !currentProfile.saloonId) {
+          setError('Saloon profile not found.');
+          setSubmitting(false);
+          return;
+        }
         res = await createAppointment({
+          saloonId: currentProfile.saloonId,
           barberId: barberIdToUse,
           customerName,
           customerPhone,

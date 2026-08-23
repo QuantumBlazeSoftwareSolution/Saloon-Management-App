@@ -25,10 +25,10 @@ export default function OwnerStaffPage() {
   const [editPin, setEditPin] = useState('');
 
   const fetchProfiles = async () => {
-    if (!currentProfile) return;
+    if (!currentProfile || !currentProfile.saloonId) return;
     setIsLoading(true);
     try {
-      const res = await getAllStaff();
+      const res = await getAllStaff(currentProfile.saloonId);
       if (res.success && res.data) {
         setProfiles(res.data);
       }
@@ -65,7 +65,7 @@ export default function OwnerStaffPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone || !currentProfile) {
+    if (!name || !phone || !currentProfile || !currentProfile.saloonId) {
       setError('Please fill in name and phone number');
       return;
     }
@@ -77,6 +77,7 @@ export default function OwnerStaffPage() {
 
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
     const res = await createStaff({
+      saloonId: currentProfile.saloonId,
       role: 'barber',
       fullName: name,
       phone,

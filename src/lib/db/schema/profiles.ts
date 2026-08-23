@@ -1,7 +1,10 @@
-import { pgTable, text, timestamp, uuid, integer, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, integer, boolean, index } from 'drizzle-orm/pg-core';
+import { saloonsTable } from './saloons';
 
 export const profilesTable = pgTable('profiles', {
   id: uuid('id').defaultRandom().primaryKey(),
+  saloonId: uuid('saloon_id')
+    .references(() => saloonsTable.id, { onDelete: 'cascade' }),
   role: text('role').notNull(),
   fullName: text('full_name').notNull(),
   phone: text('phone').notNull(),
@@ -15,7 +18,9 @@ export const profilesTable = pgTable('profiles', {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+}, (table) => ({
+  saloonIdx: index('profiles_saloon_id_idx').on(table.saloonId),
+}));
 
 export type Profile = typeof profilesTable.$inferSelect;
 export type ProfileInsert = typeof profilesTable.$inferInsert;

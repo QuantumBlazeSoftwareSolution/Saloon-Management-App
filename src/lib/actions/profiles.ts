@@ -8,7 +8,7 @@ import { db } from '../db';
 import { revalidatePath } from 'next/cache';
 import { sendOtpEmail } from '../email';
 import bcrypt from 'bcryptjs';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 const ownerOtpCache = new Map<string, { code: string; expires: number }>();
 
@@ -140,15 +140,19 @@ export async function getProfileByIdAction(id: string) {
   }
 }
 
-export async function getAllStaff() {
-  console.log(`[getAllStaff] Fetching all staff profiles`);
+export async function getAllStaff(saloonId?: string) {
+  console.log(`[getAllStaff] Fetching all staff profiles for saloon: ${saloonId}`);
   try {
-    const profiles = await getProfiles();
+    if (!saloonId) return { success: true, data: [] };
+    const profiles = await db
+      .select()
+      .from(profilesTable)
+      .where(and(eq(profilesTable.saloonId, saloonId), eq(profilesTable.role, 'barber')));
     console.log(`[getAllStaff] Success: fetched ${profiles.length} profiles`);
     return { success: true, data: profiles };
   } catch (error: any) {
     console.error(`[getAllStaff] Error: ${error.message}`);
-    return { success: false, error: error.message || 'Failed to fetch profiles.' };
+    return { success: false, error: 'Failed to fetch profiles. Please try again.' };
   }
 }
 
@@ -216,6 +220,6 @@ export async function updateStaff(id: string, data: Partial<ProfileInsert>) {
     return { success: true, data: profile };
   } catch (error: any) {
     console.error(`[updateStaff] Error: ${error.message}`);
-    return { success: false, error: error.message || 'Failed to update profile.' };
+    return { success: false, error: 'Failed to update profile. Please try again.' };
   }
 }

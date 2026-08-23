@@ -22,10 +22,10 @@ export default function OwnerServicesPage() {
   const [editActive, setEditActive] = useState(true);
 
   const fetchServices = async () => {
-    if (!currentProfile) return;
+    if (!currentProfile || !currentProfile.saloonId) return;
     setIsLoading(true);
     try {
-      const res = await getAllServices(false);
+      const res = await getAllServices(false, currentProfile.saloonId);
       if (res.success && res.data) {
         setServices(res.data);
       }
@@ -44,12 +44,13 @@ export default function OwnerServicesPage() {
     e.preventDefault();
     const price = parseFloat(priceStr);
     
-    if (!name || isNaN(price) || price < 0 || !currentProfile) {
+    if (!name || isNaN(price) || price < 0 || !currentProfile || !currentProfile.saloonId) {
       setError('Please enter a valid service name and numeric price.');
       return;
     }
 
     const res = await createService({
+      saloonId: currentProfile.saloonId,
       name,
       basePrice: price,
       active: true,

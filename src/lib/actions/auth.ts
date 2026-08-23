@@ -5,6 +5,7 @@ import { getProfileById } from '../db/profiles/read';
 import { sendOtpEmail } from '../email';
 import { db } from '../db';
 import { usersTable } from '../db/schema/users';
+import { profilesTable } from '../db/schema/profiles';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
@@ -27,7 +28,8 @@ export async function loginBarberAction(phone: string, pinOrPassword: string) {
 
     return { success: true, profile };
   } catch (error: any) {
-    return { success: false, error: error.message || 'Authentication failed.' };
+    console.error(`[loginBarberAction] Error: ${error.message}`);
+    return { success: false, error: 'Authentication failed. Please try again.' };
   }
 }
 
@@ -44,11 +46,9 @@ export async function loginOwnerAction(email: string, password: string) {
       return { success: false, error: 'Invalid email or password.' };
     }
 
-    
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = new Date(Date.now() + 5 * 60 * 1000);
 
-    
     await db
       .update(usersTable)
       .set({ otp, otpExpires: expiry })
@@ -57,7 +57,8 @@ export async function loginOwnerAction(email: string, password: string) {
     await sendOtpEmail(cleanEmail, otp);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message || 'Authentication failed.' };
+    console.error(`[loginOwnerAction] Error: ${error.message}`);
+    return { success: false, error: 'Authentication failed. Please try again.' };
   }
 }
 
@@ -81,7 +82,6 @@ export async function verifyOwnerOtpAction(email: string, code: string) {
       return { success: false, error: 'Invalid OTP code.' };
     }
 
-    
     await db
       .update(usersTable)
       .set({ otp: null, otpExpires: null })
@@ -90,6 +90,67 @@ export async function verifyOwnerOtpAction(email: string, code: string) {
     const profile = await getProfileById(user.profileId);
     return { success: true, profile };
   } catch (error: any) {
-    return { success: false, error: error.message || 'OTP verification failed.' };
+    console.error(`[verifyOwnerOtpAction] Error: ${error.message}`);
+    return { success: false, error: 'OTP verification failed. Please try again.' };
+  }
+}
+
+export async function loginAdminAction(email: string, password: string) {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await authenticateUser(cleanEmail);
+    if (!user || user.role !== 'admin') {
+      return { success: false, error: 'Invalid credentials or access denied.' };
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return { success: false, error: 'Invalid credentials or access denied.' };
+    }
+
+    const profile = await getProfileById(user.profileId);
+    if (!profile) {
+      return { success: false, error: 'Admin profile not found.' };
+    }
+
+    return { success: true, profile };
+  } catch (error: any) {
+    console.error(`[loginAdminAction] Error: ${error.message}`);
+    return { success: false, error: 'Authentication failed. Please try again.' };
+  }
+}
+
+export async function resetPasswordAction(token: string, email: string, newPassword: string) {
+  console.log(`[resetPasswordAction] Resetting password for: ${email}`);
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await authenticateUser(cleanEmail);
+    if (!user) {
+      return { success: false, error: 'User account not found.' };
+    }
+
+    if (!user.otp || !user.otpExpires) {
+      return { success: false, error: 'No active password setup request found.' };
+    }
+
+    if (new Date() > new Date(user.otpExpires)) {
+      return { success: false, error: 'Setup link/OTP has expired.' };
+    }
+
+    if (user.otp !== token.trim()) {
+      return { success: false, error: 'Invalid setup token/OTP.' };
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await db
+      .update(usersTable)
+      .set({ passwordHash: newHash, otp: null, otpExpires: null })
+      .where(eq(usersTable.id, user.id));
+
+    console.log(`[resetPasswordAction] Success: updated password for ${user.id}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error(`[resetPasswordAction] Error: ${error.message}`);
+    return { success: false, error: 'Failed to reset password. Please try again.' };
   }
 }
