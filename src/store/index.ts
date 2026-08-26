@@ -74,7 +74,7 @@ export const useSaloonStore = create<SaloonState>()(
       logs: [], 
       currentProfile: null,
       authRole: null,
-      saloonName: 'The Sterling Groom',
+      saloonName: 'Fade Master',
       _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 

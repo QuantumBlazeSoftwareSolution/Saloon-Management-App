@@ -9,12 +9,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Sterling Groom Saloon',
+  title: 'Fade Master — Smart Saloon Management',
   description: 'Saloon management system built for speed and clarity.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Sterling Groom',
+    title: 'Fade Master',
   },
 };
 

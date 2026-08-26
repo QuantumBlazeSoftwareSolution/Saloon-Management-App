@@ -47,7 +47,7 @@ export default function OwnerStaffPage() {
 
   const handleShare = async (b: any) => {
     const loginLink = `${window.location.origin}/login`;
-    const shareText = `Hi ${b.fullName},\n\nHere are your credentials for The Sterling Groom:\nPhone: ${b.phone}\nPIN: ${b.pin || '1234'}\n\nLogin here: ${loginLink}`;
+    const shareText = `Hi ${b.fullName},\n\nHere are your credentials for Fade Master:\nPhone: ${b.phone}\nPIN: ${b.pin || '1234'}\n\nLogin here: ${loginLink}`;
     if (navigator.share) {
       try {
         await navigator.share({

@@ -71,7 +71,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         <div className="space-y-8">
           <div>
             <span className="text-[10px] uppercase tracking-widest text-yellow-500 font-bold block">Management Suite</span>
-            <h1 className="text-lg font-black text-white mt-1">Sterling Admin</h1>
+            <h1 className="text-lg font-black text-white mt-1">Fade Master Admin</h1>
           </div>
 
           <nav className="flex flex-col gap-1.5">

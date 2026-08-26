@@ -13,7 +13,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function OwnerTodayPage() {
   const currentProfile = useSaloonStore((state) => state.currentProfile);
-  const [saloonName] = useState('The Sterling Groom');
+  const [saloonName] = useState('Fade Master');
   const [activeTab, setActiveTab] = useState<'activity' | 'appointments'>('activity');
 
   const [logs, setLogs] = useState<any[]>([]);

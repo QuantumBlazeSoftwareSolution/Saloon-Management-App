@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const manifest = {
-    name: 'Sterling Groom - Owner Dashboard',
-    short_name: 'Groom Analytics',
+    name: 'Fade Master - Owner Dashboard',
+    short_name: 'Fade Owner',
     description: 'Track shop performance, revenue, and staff analytics in real-time.',
     start_url: '/owner',
     display: 'standalone',
@@ -12,13 +12,13 @@ export async function GET() {
     orientation: 'portrait',
     icons: [
       {
-        src: '/black-white-barber-logo-design_712567-4529.png',
+        src: '/fade-master-logo.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any maskable',
       },
       {
-        src: '/black-white-barber-logo-design_712567-4529.png',
+        src: '/fade-master-logo.png',
         sizes: '512x512',
         type: 'image/png',
       },

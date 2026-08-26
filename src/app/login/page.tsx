@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Scissors, ShieldCheck, X, Building2, Mail, Phone, Loader2, CheckCircle, HelpCircle, Check } from 'lucide-react';
@@ -58,10 +59,20 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10"
+          className="text-center mb-10 flex flex-col items-center"
         >
-          <span className="text-xs uppercase tracking-[0.2em] text-amber-500 font-bold">Saloon Management OS</span>
-          <h1 className="text-3xl font-extrabold mt-1 text-white tracking-tight">The Sterling Groom</h1>
+          <div className="mb-4">
+            <Image
+              src="/fade-master-logo-transparent.png"
+              alt="Fade Master Logo"
+              width={80}
+              height={80}
+              priority
+              className="object-contain"
+            />
+          </div>
+          <span className="text-xs uppercase tracking-[0.2em] text-amber-500 font-bold">Smart Saloon Management</span>
+          <h1 className="text-3xl font-extrabold mt-1 text-white tracking-tight">Fade Master</h1>
           <p className="text-zinc-500 text-sm mt-2">Select your role to access the workspace</p>
         </motion.div>
 
@@ -126,7 +137,7 @@ export default function LoginPage() {
           transition={{ delay: 0.4 }}
           className="mt-12 text-center text-xs text-zinc-650"
         >
-          &copy; {new Date().getFullYear()} Sterling Groom PWA. Designed for offline speed.
+          &copy; {new Date().getFullYear()} Fade Master PWA. Designed for offline speed.
         </motion.div>
       </div>
 
@@ -217,7 +228,7 @@ export default function LoginPage() {
                       required
                       value={saloonName}
                       onChange={(e) => setSaloonName(e.target.value)}
-                      placeholder="e.g. Sterling Studio"
+                      placeholder="e.g. Fade Master Studio"
                       className="w-full px-3.5 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500"
                     />
                   </div>
@@ -231,7 +242,7 @@ export default function LoginPage() {
                       required
                       value={ownerEmail}
                       onChange={(e) => setOwnerEmail(e.target.value)}
-                      placeholder="e.g. owner@sterling.com"
+                      placeholder="e.g. owner@fademaster.com"
                       className="w-full px-3.5 py-2 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500"
                     />
                   </div>
