@@ -82,6 +82,13 @@ export async function linkGoogleAccountAction(idToken: string, invitationId: str
       return { success: false, error: 'Invitation is no longer active.' };
     }
 
+    if (googleProfile.email.trim().toLowerCase() !== invitation.ownerEmail.trim().toLowerCase()) {
+      return { 
+        success: false, 
+        error: `Authentication failed: You must sign in using the Google account registered to this invitation (${invitation.ownerEmail}).` 
+      };
+    }
+
     const cleanEmail = invitation.ownerEmail.trim().toLowerCase();
     const cleanPhone = invitation.ownerPhone.trim();
 
