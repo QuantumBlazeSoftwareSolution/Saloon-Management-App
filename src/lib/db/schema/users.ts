@@ -6,7 +6,8 @@ export const usersTable = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").unique(),
   phone: text("phone").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
+  passwordHash: text("password_hash"),
+  googleId: text("google_id").unique(),
   role: roleEnum("role").notNull(),
   profileId: uuid("profile_id")
     .references(() => profilesTable.id, { onDelete: "cascade" })

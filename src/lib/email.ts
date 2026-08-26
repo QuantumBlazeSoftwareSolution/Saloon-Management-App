@@ -10,7 +10,7 @@ export async function sendOtpEmail(toEmail: string, otp: string) {
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    from: process.env.NOREPLY_EMAIL || process.env.EMAIL_FROM || process.env.EMAIL_USER,
     to: toEmail,
     subject: 'Sterling Groom - Admin OTP Code',
     text: `Your admin verification code is: ${otp}. This code is valid for 5 minutes.`,
@@ -39,7 +39,7 @@ export async function sendSaloonSetupEmail(toEmail: string, saloonName: string, 
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    from: process.env.NOREPLY_EMAIL || process.env.EMAIL_FROM || process.env.EMAIL_USER,
     to: toEmail,
     subject: 'Your Saloon System is ready!',
     text: `Your saloon system for "${saloonName}" is ready. Please set up your password here: ${setupLink}`,

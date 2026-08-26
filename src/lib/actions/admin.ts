@@ -2,6 +2,7 @@
 
 import { db } from '../db';
 import { saloonsTable } from '../db/schema/saloons';
+import { saloonInvitationsTable } from '../db/schema/saloon-invitations';
 import { profilesTable } from '../db/schema/profiles';
 import { usersTable } from '../db/schema/users';
 import { sendSaloonSetupEmail } from '../email';
@@ -34,7 +35,7 @@ export async function createSaloonAndOwner(
   ownerPhone: string,
   ownerEmail: string
 ) {
-  console.log(`[createSaloonAndOwner] Creating saloon: ${saloonName}, owner: ${ownerName}`);
+  console.log(`[createSaloonAndOwner] Creating invitation for saloon: ${saloonName}, owner: ${ownerName}`);
   try {
     const cleanEmail = ownerEmail.trim().toLowerCase();
     const cleanPhone = ownerPhone.trim();
@@ -59,50 +60,26 @@ export async function createSaloonAndOwner(
       return { success: false, error: 'Email address already registered.' };
     }
 
-    const [saloon] = await db
-      .insert(saloonsTable)
-      .values({ name: saloonName })
-      .returning();
-
-    const [profile] = await db
-      .insert(profilesTable)
+    const [invitation] = await db
+      .insert(saloonInvitationsTable)
       .values({
-        saloonId: saloon.id,
-        role: 'owner',
-        fullName: ownerName,
-        phone: cleanPhone,
-        email: cleanEmail,
-        commissionPct: 100,
-        active: true,
+        saloonName,
+        ownerEmail: cleanEmail,
+        ownerPhone: cleanPhone,
+        status: 'pending',
       })
       .returning();
 
-    const placeholderHash = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
-    const token = crypto.randomBytes(32).toString('hex');
-    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); 
-
-    await db
-      .insert(usersTable)
-      .values({
-        phone: cleanPhone,
-        email: cleanEmail,
-        passwordHash: placeholderHash,
-        role: 'owner',
-        profileId: profile.id,
-        otp: token,
-        otpExpires: tokenExpires,
-      });
-
     const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const setupLink = `${origin}/auth/reset-password?email=${encodeURIComponent(cleanEmail)}&token=${token}`;
+    const setupLink = `${origin}/auth/invitation/${invitation.id}`;
 
     await sendSaloonSetupEmail(cleanEmail, saloonName, setupLink);
 
-    console.log(`[createSaloonAndOwner] Success: created saloon ${saloon.id} and owner profile ${profile.id}`);
-    return { success: true, data: { saloon, profile } };
+    console.log(`[createSaloonAndOwner] Success: created invitation ${invitation.id} for owner ${cleanEmail}`);
+    return { success: true, data: { invitation } };
   } catch (error: any) {
     console.error(`[createSaloonAndOwner] Error: ${error.message}`);
-    return { success: false, error: 'Failed to create saloon and owner. Please try again.' };
+    return { success: false, error: 'Failed to create saloon invitation. Please try again.' };
   }
 }
 
