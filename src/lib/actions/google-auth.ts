@@ -1,6 +1,7 @@
 'use server';
 
-import * as admin from 'firebase-admin';
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { db } from '../db';
 import { saloonInvitationsTable } from '../db/schema/saloon-invitations';
 import { saloonsTable } from '../db/schema/saloons';
@@ -9,14 +10,14 @@ import { usersTable } from '../db/schema/users';
 import { eq, and } from 'drizzle-orm';
 
 function initAdmin() {
-  if (!admin.apps.length) {
+  if (getApps().length === 0) {
     try {
       const privateKey = process.env.FIREBASE_PRIVATE_KEY 
         ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
         : undefined;
 
-      admin.initializeApp({
-        credential: admin.credential.cert({
+      initializeApp({
+        credential: cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
           privateKey: privateKey,
@@ -31,7 +32,7 @@ function initAdmin() {
 
 async function verifyFirebaseIdToken(idToken: string) {
   initAdmin();
-  const decodedToken = await admin.auth().verifyIdToken(idToken);
+  const decodedToken = await getAuth().verifyIdToken(idToken);
   return {
     uid: decodedToken.uid,
     email: decodedToken.email,
@@ -105,7 +106,7 @@ export async function linkGoogleAccountAction(idToken: string, invitationId: str
         name: invitation.saloonName,
         ownerEmail: cleanEmail,
         ownerPhone: cleanPhone,
-        status: 'approved',
+        status: 'active',
       })
       .returning();
 

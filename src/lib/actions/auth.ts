@@ -16,6 +16,10 @@ export async function loginBarberAction(phone: string, pinOrPassword: string) {
       return { success: false, error: 'Invalid phone or PIN.' };
     }
 
+    if (!user.passwordHash) {
+      return { success: false, error: 'Invalid phone or PIN.' };
+    }
+
     const isMatch = await bcrypt.compare(pinOrPassword, user.passwordHash);
     if (!isMatch) {
       return { success: false, error: 'Invalid phone or PIN.' };
@@ -38,6 +42,10 @@ export async function loginOwnerAction(email: string, password: string) {
     const cleanEmail = email.trim().toLowerCase();
     const user = await authenticateUser(cleanEmail);
     if (!user || user.role !== 'owner') {
+      return { success: false, error: 'Invalid email or password.' };
+    }
+
+    if (!user.passwordHash) {
       return { success: false, error: 'Invalid email or password.' };
     }
 
@@ -100,6 +108,10 @@ export async function loginAdminAction(email: string, password: string) {
     const cleanEmail = email.trim().toLowerCase();
     const user = await authenticateUser(cleanEmail);
     if (!user || user.role !== 'admin') {
+      return { success: false, error: 'Invalid credentials or access denied.' };
+    }
+
+    if (!user.passwordHash) {
       return { success: false, error: 'Invalid credentials or access denied.' };
     }
 
