@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { Scissors, ShieldCheck, X, Building2, Mail, Phone, Loader2, CheckCircle, HelpCircle } from 'lucide-react';
+import { Scissors, ShieldCheck, X, Building2, Mail, Phone, Loader2, CheckCircle, HelpCircle, Check } from 'lucide-react';
 import { requestSaloonSetup } from '@/lib/actions/admin';
 
 export default function LoginPage() {
@@ -174,16 +174,26 @@ export default function LoginPage() {
               )}
 
               {success ? (
-                <div className="space-y-4 py-4 text-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                  className="space-y-4 py-6 text-center"
+                >
                   <div className="flex justify-center">
-                    <div className="h-12 w-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500">
-                      <CheckCircle className="h-6 w-6" />
-                    </div>
+                    <motion.div
+                      initial={{ scale: 0, rotate: -45 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.15, type: 'spring', stiffness: 260, damping: 15 }}
+                      className="h-16 w-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/5"
+                    >
+                      <Check className="h-9 w-9 stroke-[2.5]" />
+                    </motion.div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-white text-sm">Request Submitted Successfully!</h4>
-                    <p className="text-zinc-500 text-xs mt-1">
-                      Our administrator will review your setup request and contact you shortly.
+                  <div className="space-y-1">
+                    <h4 className="font-extrabold text-white text-base">Request Submitted!</h4>
+                    <p className="text-zinc-400 text-xs px-2 leading-relaxed">
+                      We have sent a confirmation email to you. Our administrator will review your setup shortly!
                     </p>
                   </div>
                   <button
@@ -191,11 +201,11 @@ export default function LoginPage() {
                       setIsRequestOpen(false);
                       setSuccess(false);
                     }}
-                    className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-bold text-white mt-4"
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all rounded-xl text-xs font-bold text-white mt-4 cursor-pointer"
                   >
-                    Close Window
+                    Got it, thanks!
                   </button>
-                </div>
+                </motion.div>
               ) : (
                 <form onSubmit={handleRequestSubmit} className="space-y-4">
                   <div>

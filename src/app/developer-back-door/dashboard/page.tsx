@@ -3,21 +3,46 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSaloonStore } from '@/store';
-import { Shield, Plus, Loader2, LogOut, CheckCircle, AlertCircle, Building2, User, Phone, Mail, X } from 'lucide-react';
-import { getAllSaloons, createSaloonAndOwner } from '@/lib/actions/admin';
+import { 
+  Shield, 
+  Plus, 
+  Loader2, 
+  LogOut, 
+  CheckCircle, 
+  AlertCircle, 
+  Building2, 
+  User, 
+  Phone, 
+  Mail, 
+  X, 
+  Check, 
+  Clock, 
+  Trash2 
+} from 'lucide-react';
+import { 
+  getAllSaloons, 
+  createSaloonAndOwner, 
+  getSaloonRequestsAction, 
+  approveSaloonRequestAction, 
+  rejectSaloonRequestAction 
+} from '@/lib/actions/admin';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const currentProfile = useSaloonStore((state) => state.currentProfile);
   const logout = useSaloonStore((state) => state.logout);
 
+  // Lists & Tabs States
   const [saloons, setSaloons] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'saloons' | 'requests'>('saloons');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [actioningId, setActioningId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Selected Saloon State
+  // Selected Saloon State (Option B path)
   const [selectedSaloon, setSelectedSaloon] = useState<any | null>(null);
 
   // Form State
@@ -26,17 +51,21 @@ export default function AdminDashboard() {
   const [ownerPhone, setOwnerPhone] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
 
-  const fetchSaloons = async () => {
+  const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const res = await getAllSaloons();
-      if (res.success && res.data) {
-        setSaloons(res.data);
-        // Refresh selected saloon details
+      const resSaloons = await getAllSaloons();
+      if (resSaloons.success && resSaloons.data) {
+        setSaloons(resSaloons.data);
         if (selectedSaloon) {
-          const updated = res.data.find((s) => s.id === selectedSaloon.id);
+          const updated = resSaloons.data.find((s) => s.id === selectedSaloon.id);
           if (updated) setSelectedSaloon(updated);
         }
+      }
+
+      const resRequests = await getSaloonRequestsAction();
+      if (resRequests.success && resRequests.data) {
+        setRequests(resRequests.data);
       }
     } finally {
       setLoading(false);
@@ -51,7 +80,7 @@ export default function AdminDashboard() {
       router.replace('/developer-back-door/login');
       return;
     }
-    fetchSaloons();
+    fetchDashboardData();
   }, [currentProfile, _hasHydrated]);
 
   const handleLogout = () => {
@@ -90,7 +119,7 @@ export default function AdminDashboard() {
         setOwnerName('');
         setOwnerPhone('');
         setOwnerEmail('');
-        await fetchSaloons();
+        await fetchDashboardData();
       } else {
         setError(res.error || 'Failed to create tenant.');
       }
@@ -98,6 +127,44 @@ export default function AdminDashboard() {
       setError('Provisioning failed.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleApproveRequest = async (requestId: string) => {
+    setError('');
+    setSuccess('');
+    setActioningId(requestId);
+    try {
+      const res = await approveSaloonRequestAction(requestId);
+      if (res.success) {
+        setSuccess('Setup request approved. Setup invitation email has been sent!');
+        await fetchDashboardData();
+      } else {
+        setError(res.error || 'Failed to approve request.');
+      }
+    } catch (err: any) {
+      setError('Approval failed.');
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    setError('');
+    setSuccess('');
+    setActioningId(requestId);
+    try {
+      const res = await rejectSaloonRequestAction(requestId);
+      if (res.success) {
+        setSuccess('Setup request rejected.');
+        await fetchDashboardData();
+      } else {
+        setError(res.error || 'Failed to reject request.');
+      }
+    } catch (err: any) {
+      setError('Rejection failed.');
+    } finally {
+      setActioningId(null);
     }
   };
 
@@ -112,7 +179,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center">
         <Loader2 className="h-6 w-6 text-purple-500 animate-spin" />
-        <span className="text-[10px] text-zinc-550 font-bold uppercase tracking-wider mt-3">Loading session...</span>
+        <span className="text-[10px] text-zinc-555 font-bold uppercase tracking-wider mt-3">Loading session...</span>
       </div>
     );
   }
@@ -140,64 +207,164 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-5xl mx-auto w-full flex-1 p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left Side: Saloons List */}
+        {/* Left Side: Tabs Panel */}
         <section className="md:col-span-7 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Active Saloons ({saloons.length})</h2>
+          <div className="flex border-b border-zinc-900 gap-4 mb-4">
+            <button
+              onClick={() => setActiveTab('saloons')}
+              className={`pb-2.5 px-1 font-bold text-xs uppercase tracking-widest transition-all cursor-pointer relative ${
+                activeTab === 'saloons' ? 'text-purple-500 font-extrabold' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              Active Saloons ({saloons.length})
+              {activeTab === 'saloons' && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-purple-500" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`pb-2.5 px-1 font-bold text-xs uppercase tracking-widest transition-all cursor-pointer relative ${
+                activeTab === 'requests' ? 'text-purple-500 font-extrabold' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              Setup Requests ({requests.length})
+              {activeTab === 'requests' && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-purple-500" />
+              )}
+            </button>
           </div>
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 border border-dashed border-zinc-900 rounded-2xl">
               <Loader2 className="h-6 w-6 text-purple-500 animate-spin" />
-              <span className="text-[10px] text-zinc-650 font-bold uppercase tracking-wider mt-3">Loading tenants...</span>
+              <span className="text-[10px] text-zinc-650 font-bold uppercase tracking-wider mt-3">Loading dashboard data...</span>
             </div>
-          ) : saloons.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 border border-dashed border-zinc-900 rounded-2xl">
-              <Building2 className="h-10 w-10 text-zinc-800 mb-3" />
-              <h3 className="text-xs font-bold text-zinc-500">No saloon tenants found</h3>
-            </div>
-          ) : (
-            <div className="grid gap-3">
-              {saloons.map((s) => {
-                const isSelected = selectedSaloon?.id === s.id;
-                return (
-                  <div
-                    key={s.id}
-                    onClick={() => selectSaloon(s)}
-                    className={`p-4 border rounded-2xl flex flex-col gap-1 cursor-pointer transition-all duration-300 ${
-                      isSelected
-                        ? 'border-purple-500 bg-purple-500/5 shadow-lg shadow-purple-500/5'
-                        : 'border-zinc-900 bg-zinc-900/30 hover:border-zinc-800'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-white text-sm">{s.name}</h3>
-                      <span className="text-[10px] text-zinc-550 font-mono">
-                        {new Date(s.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-zinc-650 font-mono">ID: {s.id}</p>
-                    
-                    {s.owners && s.owners.length > 0 ? (
-                      <div className="flex flex-wrap gap-1 mt-1.5 pt-1.5 border-t border-zinc-900/40">
-                        <span className="text-[9px] text-purple-400 font-bold uppercase tracking-wider">Owners: </span>
-                        <span className="text-[10px] text-zinc-400 font-semibold">
-                          {s.owners.map((o: any) => o.fullName).join(', ')}
+          ) : activeTab === 'saloons' ? (
+            /* Saloons List */
+            saloons.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 border border-dashed border-zinc-900 rounded-2xl">
+                <Building2 className="h-10 w-10 text-zinc-800 mb-3" />
+                <h3 className="text-xs font-bold text-zinc-500">No saloon tenants found</h3>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {saloons.map((s) => {
+                  const isSelected = selectedSaloon?.id === s.id;
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => selectSaloon(s)}
+                      className={`p-4 border rounded-2xl flex flex-col gap-1 cursor-pointer transition-all duration-300 ${
+                        isSelected
+                          ? 'border-purple-500 bg-purple-500/5 shadow-lg shadow-purple-500/5'
+                          : 'border-zinc-900 bg-zinc-900/30 hover:border-zinc-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-white text-sm">{s.name}</h3>
+                        <span className="text-[10px] text-zinc-550 font-mono">
+                          {new Date(s.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                    ) : (
-                      <p className="text-[9px] text-zinc-600 font-semibold uppercase tracking-wider mt-1.5 pt-1.5 border-t border-zinc-900/40">
-                        No registered owners
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                      <p className="text-[10px] text-zinc-650 font-mono">ID: {s.id}</p>
+                      
+                      {s.owners && s.owners.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 mt-1.5 pt-1.5 border-t border-zinc-900/40">
+                          <span className="text-[9px] text-purple-400 font-bold uppercase tracking-wider">Owners: </span>
+                          <span className="text-[10px] text-zinc-400 font-semibold">
+                            {s.owners.map((o: any) => o.fullName).join(', ')}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-[9px] text-zinc-600 font-semibold uppercase tracking-wider mt-1.5 pt-1.5 border-t border-zinc-900/40">
+                          No registered owners
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            /* Setup Requests List */
+            requests.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 border border-dashed border-zinc-900 rounded-2xl">
+                <Clock className="h-10 w-10 text-zinc-850 mb-3" />
+                <h3 className="text-xs font-bold text-zinc-555">No pending workspace requests</h3>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {requests.map((r) => {
+                  const isPending = r.status === 'pending';
+                  return (
+                    <div
+                      key={r.id}
+                      className="p-4 border border-zinc-900 bg-zinc-900/30 rounded-2xl flex flex-col gap-2 transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-bold text-white text-sm">{r.saloonName}</h3>
+                          <span className="text-[10px] text-zinc-555 font-mono">
+                            Requested: {new Date(r.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        
+                        {/* Status Badge */}
+                        <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${
+                          r.status === 'approved'
+                            ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                            : r.status === 'rejected'
+                            ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                            : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                        }`}>
+                          {r.status}
+                        </span>
+                      </div>
+
+                      <div className="space-y-0.5 text-xs text-zinc-400 mt-1">
+                        <div className="flex items-center gap-1.5">
+                          <Mail className="h-3.5 w-3.5 text-zinc-600" />
+                          <span>{r.ownerEmail}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5 text-zinc-600" />
+                          <span className="font-mono">{r.ownerPhone}</span>
+                        </div>
+                      </div>
+
+                      {isPending && (
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-900">
+                          <button
+                            disabled={actioningId !== null}
+                            onClick={() => handleApproveRequest(r.id)}
+                            className="flex-1 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            {actioningId === r.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5" />
+                            )}
+                            <span>Approve Setup</span>
+                          </button>
+                          <button
+                            disabled={actioningId !== null}
+                            onClick={() => handleRejectRequest(r.id)}
+                            className="py-1.5 px-3 bg-zinc-800 hover:bg-red-950/20 hover:text-red-400 hover:border-red-500/20 border border-transparent rounded-xl text-xs font-bold text-zinc-400 flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Reject</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )
           )}
         </section>
 
-        {/* Right Side: Action Form */}
+        {/* Right Side: Direct Provisioning Action Form */}
         <section className="md:col-span-5">
           <div className="p-5 border border-zinc-900 bg-zinc-900/30 rounded-2xl sticky top-24 space-y-4">
             <div className="flex items-start justify-between">
@@ -330,7 +497,7 @@ export default function AdminDashboard() {
                   {selectedSaloon.owners.map((o: any) => (
                     <div key={o.id} className="p-3 bg-zinc-950/40 border border-zinc-900 rounded-xl space-y-0.5">
                       <p className="text-xs font-bold text-white">{o.fullName}</p>
-                      <div className="flex flex-col gap-0.5 text-[10px] text-zinc-500 font-mono">
+                      <div className="flex flex-col gap-0.5 text-[10px] text-zinc-555 font-mono">
                         <span>Email: {o.email}</span>
                         <span>Phone: {o.phone}</span>
                       </div>

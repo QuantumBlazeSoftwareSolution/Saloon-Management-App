@@ -8,3 +8,6 @@ export const appointmentStatusEnum = pgEnum("appointment_status_enum", appointme
 
 export const saloonStatusEnumItem = ["pending", "rejected", "active", "inactive"] as const;
 export const saloonStatusEnum = pgEnum("saloon_status_enum", saloonStatusEnumItem);
+
+export const reviewStatusEnumItem = ["pending", "approved", "rejected"] as const;
+export const reviewStatusEnum = pgEnum("review_status_enum", reviewStatusEnumItem);

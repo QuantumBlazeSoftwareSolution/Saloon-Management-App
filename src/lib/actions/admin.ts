@@ -3,9 +3,11 @@
 import { db } from '../db';
 import { saloonsTable } from '../db/schema/saloons';
 import { saloonInvitationsTable } from '../db/schema/saloon-invitations';
+import { saloonRequestsTable } from '../db/schema/saloon-requests';
 import { profilesTable } from '../db/schema/profiles';
 import { usersTable } from '../db/schema/users';
-import { sendSaloonSetupEmail } from '../email';
+import { sendSaloonSetupEmail, sendRequestConfirmationEmail, sendAdminNotificationEmail } from '../email';
+import { adminEmails } from '../data';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -108,20 +110,107 @@ export async function requestSaloonSetup(
 ) {
   console.log(`[requestSaloonSetup] Saloon name: ${saloonName}, Owner email: ${ownerEmail}`);
   try {
-    const [saloon] = await db
-      .insert(saloonsTable)
+    const [request] = await db
+      .insert(saloonRequestsTable)
       .values({
-        name: saloonName,
+        saloonName: saloonName.trim(),
         ownerEmail: ownerEmail.trim().toLowerCase(),
         ownerPhone: ownerPhone.trim(),
         status: 'pending',
       })
       .returning();
 
-    console.log(`[requestSaloonSetup] Success: created pending saloon request ${saloon.id}`);
-    return { success: true, data: saloon };
+    const targetEmail = ownerEmail.trim().toLowerCase();
+    await sendRequestConfirmationEmail(targetEmail, saloonName.trim());
+
+    // Send notification emails to all admin emails
+    if (adminEmails && adminEmails.length > 0) {
+      await Promise.all(
+        adminEmails.map((adminEmail) =>
+          sendAdminNotificationEmail(
+            adminEmail,
+            saloonName.trim(),
+            targetEmail,
+            ownerPhone.trim()
+          )
+        )
+      );
+    }
+
+    console.log(`[requestSaloonSetup] Success: created pending saloon request ${request.id}`);
+    return { success: true, data: request };
   } catch (error: any) {
     console.error(`[requestSaloonSetup] Error: ${error.message}`);
     return { success: false, error: 'Failed to register saloon request. Please try again.' };
+  }
+}
+
+export async function getSaloonRequestsAction() {
+  console.log(`[getSaloonRequestsAction] Fetching all saloon requests`);
+  try {
+    const requests = await db
+      .select()
+      .from(saloonRequestsTable)
+      .orderBy(saloonRequestsTable.createdAt);
+    return { success: true, data: requests };
+  } catch (error: any) {
+    console.error(`[getSaloonRequestsAction] Error: ${error.message}`);
+    return { success: false, error: 'Failed to fetch setup requests.' };
+  }
+}
+
+export async function approveSaloonRequestAction(requestId: string) {
+  console.log(`[approveSaloonRequestAction] Approving request: ${requestId}`);
+  try {
+    const [request] = await db
+      .select()
+      .from(saloonRequestsTable)
+      .where(eq(saloonRequestsTable.id, requestId))
+      .limit(1);
+
+    if (!request) {
+      return { success: false, error: 'Request not found.' };
+    }
+
+    if (request.status !== 'pending') {
+      return { success: false, error: 'Request is already processed.' };
+    }
+
+    // Trigger direct invitation generation logic
+    const res = await createSaloonAndOwner(
+      request.saloonName,
+      'Owner User', // placeholder owner name to start setup
+      request.ownerPhone,
+      request.ownerEmail
+    );
+
+    if (!res.success) {
+      return { success: false, error: res.error || 'Failed to dispatch setup invitation.' };
+    }
+
+    // Update status to approved
+    await db
+      .update(saloonRequestsTable)
+      .set({ status: 'approved' })
+      .where(eq(saloonRequestsTable.id, requestId));
+
+    return { success: true };
+  } catch (error: any) {
+    console.error(`[approveSaloonRequestAction] Error: ${error.message}`);
+    return { success: false, error: 'Failed to approve saloon request.' };
+  }
+}
+
+export async function rejectSaloonRequestAction(requestId: string) {
+  console.log(`[rejectSaloonRequestAction] Rejecting request: ${requestId}`);
+  try {
+    await db
+      .update(saloonRequestsTable)
+      .set({ status: 'rejected' })
+      .where(eq(saloonRequestsTable.id, requestId));
+    return { success: true };
+  } catch (error: any) {
+    console.error(`[rejectSaloonRequestAction] Error: ${error.message}`);
+    return { success: false, error: 'Failed to reject saloon request.' };
   }
 }
