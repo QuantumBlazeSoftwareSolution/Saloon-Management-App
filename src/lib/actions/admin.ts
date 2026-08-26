@@ -11,9 +11,9 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 export async function getAllSaloons() {
-  console.log(`[getAllSaloons] Fetching all saloons`);
+  console.log(`[getAllSaloons] Fetching all saloons and their owners`);
   try {
-    const result = await db
+    const saloons = await db
       .select({
         id: saloonsTable.id,
         name: saloonsTable.name,
@@ -21,8 +21,24 @@ export async function getAllSaloons() {
       })
       .from(saloonsTable);
 
-    console.log(`[getAllSaloons] Success: fetched ${result.length} saloons`);
-    return { success: true, data: result };
+    const owners = await db
+      .select({
+        id: profilesTable.id,
+        saloonId: profilesTable.saloonId,
+        fullName: profilesTable.fullName,
+        email: profilesTable.email,
+        phone: profilesTable.phone,
+      })
+      .from(profilesTable)
+      .where(eq(profilesTable.role, 'owner'));
+
+    const data = saloons.map((s) => ({
+      ...s,
+      owners: owners.filter((o) => o.saloonId === s.id),
+    }));
+
+    console.log(`[getAllSaloons] Success: fetched ${data.length} saloons`);
+    return { success: true, data };
   } catch (error: any) {
     console.error(`[getAllSaloons] Error: ${error.message}`);
     return { success: false, error: 'Failed to fetch saloons. Please try again.' };
@@ -33,9 +49,10 @@ export async function createSaloonAndOwner(
   saloonName: string,
   ownerName: string,
   ownerPhone: string,
-  ownerEmail: string
+  ownerEmail: string,
+  saloonId?: string
 ) {
-  console.log(`[createSaloonAndOwner] Creating invitation for saloon: ${saloonName}, owner: ${ownerName}`);
+  console.log(`[createSaloonAndOwner] Creating invitation for saloon: ${saloonName}, owner: ${ownerName}, saloonId: ${saloonId}`);
   try {
     const cleanEmail = ownerEmail.trim().toLowerCase();
     const cleanPhone = ownerPhone.trim();
@@ -63,6 +80,7 @@ export async function createSaloonAndOwner(
     const [invitation] = await db
       .insert(saloonInvitationsTable)
       .values({
+        saloonId: saloonId || null,
         saloonName,
         ownerEmail: cleanEmail,
         ownerPhone: cleanPhone,

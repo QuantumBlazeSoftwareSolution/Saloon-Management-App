@@ -1,7 +1,5 @@
 'use server';
 
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 import { db } from '../db';
 import { saloonInvitationsTable } from '../db/schema/saloon-invitations';
 import { saloonsTable } from '../db/schema/saloons';
@@ -9,34 +7,32 @@ import { profilesTable } from '../db/schema/profiles';
 import { usersTable } from '../db/schema/users';
 import { eq, and } from 'drizzle-orm';
 
-function initAdmin() {
-  if (getApps().length === 0) {
-    try {
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY 
-        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-        : undefined;
-
-      initializeApp({
-        credential: cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: privateKey,
-        }),
-      });
-      console.log('[FirebaseAdmin] Initialized successfully');
-    } catch (e: any) {
-      console.error('[FirebaseAdmin] Initialization failed:', e.message);
-    }
-  }
-}
-
 async function verifyFirebaseIdToken(idToken: string) {
-  initAdmin();
-  const decodedToken = await getAuth().verifyIdToken(idToken);
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!apiKey) {
+    throw new Error('Firebase API Key is missing in environment variables.');
+  }
+
+  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+
+  const data = await res.json();
+  if (data.error) {
+    throw new Error(data.error.message || 'Failed to verify ID token.');
+  }
+
+  const user = data.users?.[0];
+  if (!user) {
+    throw new Error('No user found for this token.');
+  }
+
   return {
-    uid: decodedToken.uid,
-    email: decodedToken.email,
-    name: decodedToken.name || 'Owner User',
+    uid: user.localId,
+    email: user.email,
+    name: user.displayName || 'Owner User',
   };
 }
 
@@ -99,22 +95,27 @@ export async function linkGoogleAccountAction(idToken: string, invitationId: str
       return { success: false, error: 'Email or phone already registered.' };
     }
 
-    // 1. Create Saloon
-    const [saloon] = await db
-      .insert(saloonsTable)
-      .values({
-        name: invitation.saloonName,
-        ownerEmail: cleanEmail,
-        ownerPhone: cleanPhone,
-        status: 'active',
-      })
-      .returning();
+    let activeSaloonId = invitation.saloonId;
+
+    if (!activeSaloonId) {
+      // 1. Create Saloon
+      const [saloon] = await db
+        .insert(saloonsTable)
+        .values({
+          name: invitation.saloonName,
+          ownerEmail: cleanEmail,
+          ownerPhone: cleanPhone,
+          status: 'active',
+        })
+        .returning();
+      activeSaloonId = saloon.id;
+    }
 
     // 2. Create Profile
     const [profile] = await db
       .insert(profilesTable)
       .values({
-        saloonId: saloon.id,
+        saloonId: activeSaloonId,
         role: 'owner',
         fullName: googleProfile.name,
         phone: cleanPhone,
@@ -141,7 +142,7 @@ export async function linkGoogleAccountAction(idToken: string, invitationId: str
       .set({ status: 'accepted' })
       .where(eq(saloonInvitationsTable.id, invitationId));
 
-    console.log(`[linkGoogleAccountAction] Success: provisioned saloon ${saloon.id} for owner ${profile.id}`);
+    console.log(`[linkGoogleAccountAction] Success: provisioned saloon ${activeSaloonId} for owner ${profile.id}`);
     return { success: true, profile };
   } catch (error: any) {
     console.error(`[linkGoogleAccountAction] Error: ${error.message}`);
