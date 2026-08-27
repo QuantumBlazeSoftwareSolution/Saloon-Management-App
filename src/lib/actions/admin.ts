@@ -1,16 +1,20 @@
-'use server';
+"use server";
 
-import { db } from '../db';
-import { saloonsTable } from '../db/schema/saloons';
-import { saloonInvitationsTable } from '../db/schema/saloon-invitations';
-import { saloonRequestsTable } from '../db/schema/saloon-requests';
-import { profilesTable } from '../db/schema/profiles';
-import { usersTable } from '../db/schema/users';
-import { sendSaloonSetupEmail, sendRequestConfirmationEmail, sendAdminNotificationEmail } from '../email';
-import { adminEmails } from '../data';
-import { eq } from 'drizzle-orm';
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import { db } from "../db";
+import { saloonsTable } from "../db/schema/saloons";
+import { saloonInvitationsTable } from "../db/schema/saloon-invitations";
+import { saloonRequestsTable } from "../db/schema/saloon-requests";
+import { profilesTable } from "../db/schema/profiles";
+import { usersTable } from "../db/schema/users";
+import {
+  sendSaloonSetupEmail,
+  sendRequestConfirmationEmail,
+  sendAdminNotificationEmail,
+} from "../email";
+import { adminEmails } from "../data";
+import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 export async function getAllSaloons() {
   console.log(`[getAllSaloons] Fetching all saloons and their owners`);
@@ -32,7 +36,7 @@ export async function getAllSaloons() {
         phone: profilesTable.phone,
       })
       .from(profilesTable)
-      .where(eq(profilesTable.role, 'owner'));
+      .where(eq(profilesTable.role, "owner"));
 
     const data = saloons.map((s) => ({
       ...s,
@@ -43,18 +47,31 @@ export async function getAllSaloons() {
     return { success: true, data };
   } catch (error: any) {
     console.error(`[getAllSaloons] Error: ${error.message}`);
-    return { success: false, error: 'Failed to fetch saloons. Please try again.' };
+    return {
+      success: false,
+      error: "Failed to fetch saloons. Please try again.",
+    };
   }
 }
 
-export async function createSaloonAndOwner(
-  saloonName: string,
-  ownerName: string,
-  ownerPhone: string,
-  ownerEmail: string,
-  saloonId?: string
-) {
-  console.log(`[createSaloonAndOwner] Creating invitation for saloon: ${saloonName}, owner: ${ownerName}, saloonId: ${saloonId}`);
+export async function createSaloonAndOwner({
+  saloonName,
+  ownerName,
+  ownerPhone,
+  ownerEmail,
+  saloonId,
+  origin,
+}: {
+  saloonName: string;
+  ownerName: string;
+  ownerPhone: string;
+  ownerEmail: string;
+  saloonId?: string;
+  origin: string;
+}) {
+  console.log(
+    `[createSaloonAndOwner] Creating invitation for saloon: ${saloonName}, owner: ${ownerName}, saloonId: ${saloonId}`,
+  );
   try {
     const cleanEmail = ownerEmail.trim().toLowerCase();
     const cleanPhone = ownerPhone.trim();
@@ -66,7 +83,7 @@ export async function createSaloonAndOwner(
       .limit(1);
 
     if (existingUser.length > 0) {
-      return { success: false, error: 'Phone number already registered.' };
+      return { success: false, error: "Phone number already registered." };
     }
 
     const existingEmail = await db
@@ -76,7 +93,7 @@ export async function createSaloonAndOwner(
       .limit(1);
 
     if (existingEmail.length > 0) {
-      return { success: false, error: 'Email address already registered.' };
+      return { success: false, error: "Email address already registered." };
     }
 
     const [invitation] = await db
@@ -86,20 +103,24 @@ export async function createSaloonAndOwner(
         saloonName,
         ownerEmail: cleanEmail,
         ownerPhone: cleanPhone,
-        status: 'pending',
+        status: "pending",
       })
       .returning();
 
-    const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const setupLink = `${origin}/auth/invitation/${invitation.id}`;
 
     await sendSaloonSetupEmail(cleanEmail, saloonName, setupLink);
 
-    console.log(`[createSaloonAndOwner] Success: created invitation ${invitation.id} for owner ${cleanEmail}`);
+    console.log(
+      `[createSaloonAndOwner] Success: created invitation ${invitation.id} for owner ${cleanEmail}`,
+    );
     return { success: true, data: { invitation } };
   } catch (error: any) {
     console.error(`[createSaloonAndOwner] Error: ${error.message}`);
-    return { success: false, error: 'Failed to create saloon invitation. Please try again.' };
+    return {
+      success: false,
+      error: "Failed to create saloon invitation. Please try again.",
+    };
   }
 }
 
@@ -109,9 +130,11 @@ export async function requestSaloonSetup(
   ownerPhone: string,
   ownerName?: string,
   staffCount?: string,
-  managementMethod?: string
+  managementMethod?: string,
 ) {
-  console.log(`[requestSaloonSetup] Saloon name: ${saloonName}, Owner email: ${ownerEmail}`);
+  console.log(
+    `[requestSaloonSetup] Saloon name: ${saloonName}, Owner email: ${ownerEmail}`,
+  );
   try {
     const [request] = await db
       .insert(saloonRequestsTable)
@@ -122,7 +145,7 @@ export async function requestSaloonSetup(
         ownerName: ownerName?.trim() || null,
         staffCount: staffCount?.trim() || null,
         managementMethod: managementMethod?.trim() || null,
-        status: 'pending',
+        status: "pending",
       })
       .returning();
 
@@ -140,17 +163,22 @@ export async function requestSaloonSetup(
             ownerPhone.trim(),
             ownerName,
             staffCount,
-            managementMethod
-          )
-        )
+            managementMethod,
+          ),
+        ),
       );
     }
 
-    console.log(`[requestSaloonSetup] Success: created pending saloon request ${request.id}`);
+    console.log(
+      `[requestSaloonSetup] Success: created pending saloon request ${request.id}`,
+    );
     return { success: true, data: request };
   } catch (error: any) {
     console.error(`[requestSaloonSetup] Error: ${error.message}`);
-    return { success: false, error: 'Failed to register saloon request. Please try again.' };
+    return {
+      success: false,
+      error: "Failed to register saloon request. Please try again.",
+    };
   }
 }
 
@@ -164,11 +192,17 @@ export async function getSaloonRequestsAction() {
     return { success: true, data: requests };
   } catch (error: any) {
     console.error(`[getSaloonRequestsAction] Error: ${error.message}`);
-    return { success: false, error: 'Failed to fetch setup requests.' };
+    return { success: false, error: "Failed to fetch setup requests." };
   }
 }
 
-export async function approveSaloonRequestAction(requestId: string) {
+export async function approveSaloonRequestAction({
+  requestId,
+  origin,
+}:{
+  requestId: string,
+  origin: string,
+}) {
   console.log(`[approveSaloonRequestAction] Approving request: ${requestId}`);
   try {
     const [request] = await db
@@ -178,48 +212,58 @@ export async function approveSaloonRequestAction(requestId: string) {
       .limit(1);
 
     if (!request) {
-      return { success: false, error: 'Request not found.' };
+      return { success: false, error: "Request not found." };
     }
 
-    if (request.status !== 'pending') {
-      return { success: false, error: 'Request is already processed.' };
+    if (request.status !== "pending") {
+      return { success: false, error: "Request is already processed." };
     }
 
     // Trigger direct invitation generation logic
-    const res = await createSaloonAndOwner(
-      request.saloonName,
-      request.ownerName || 'Owner User',
-      request.ownerPhone,
-      request.ownerEmail
-    );
+    const res = await createSaloonAndOwner({
+      saloonName: request.saloonName,
+      ownerName: request.ownerName || "Owner User",
+      ownerPhone: request.ownerPhone,
+      ownerEmail: request.ownerEmail,
+      origin: origin,
+    });
 
     if (!res.success) {
-      return { success: false, error: res.error || 'Failed to dispatch setup invitation.' };
+      return {
+        success: false,
+        error: res.error || "Failed to dispatch setup invitation.",
+      };
     }
 
     // Update status to approved
     await db
       .update(saloonRequestsTable)
-      .set({ status: 'approved' })
+      .set({ status: "approved" })
       .where(eq(saloonRequestsTable.id, requestId));
 
     return { success: true };
   } catch (error: any) {
     console.error(`[approveSaloonRequestAction] Error: ${error.message}`);
-    return { success: false, error: 'Failed to approve saloon request.' };
+    return { success: false, error: "Failed to approve saloon request." };
   }
 }
 
-export async function rejectSaloonRequestAction(requestId: string) {
+export async function rejectSaloonRequestAction({
+  requestId,
+  origin,
+}:{
+  requestId: string,
+  origin: string,
+}) {
   console.log(`[rejectSaloonRequestAction] Rejecting request: ${requestId}`);
   try {
     await db
       .update(saloonRequestsTable)
-      .set({ status: 'rejected' })
+      .set({ status: "rejected" })
       .where(eq(saloonRequestsTable.id, requestId));
     return { success: true };
   } catch (error: any) {
     console.error(`[rejectSaloonRequestAction] Error: ${error.message}`);
-    return { success: false, error: 'Failed to reject saloon request.' };
+    return { success: false, error: "Failed to reject saloon request." };
   }
 }
