@@ -488,7 +488,7 @@ export default function PreOrderPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden max-w-md w-full relative shadow-2xl"
+              className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-y-auto max-w-md w-full relative shadow-2xl max-h-[90vh] flex flex-col"
             >
               <button 
                 onClick={() => setShowPopup(false)}
@@ -497,7 +497,7 @@ export default function PreOrderPage() {
                 <X className="h-4 w-4" />
               </button>
 
-              <div className="relative aspect-[4/5] w-full">
+              <div className="relative h-[38vh] sm:h-[48vh] w-full shrink-0">
                 <Image 
                   src="/banner/pre-order.png" 
                   alt="Fade Master Promo Banner" 
