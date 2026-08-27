@@ -106,7 +106,10 @@ export async function createSaloonAndOwner(
 export async function requestSaloonSetup(
   saloonName: string,
   ownerEmail: string,
-  ownerPhone: string
+  ownerPhone: string,
+  ownerName?: string,
+  staffCount?: string,
+  managementMethod?: string
 ) {
   console.log(`[requestSaloonSetup] Saloon name: ${saloonName}, Owner email: ${ownerEmail}`);
   try {
@@ -116,6 +119,9 @@ export async function requestSaloonSetup(
         saloonName: saloonName.trim(),
         ownerEmail: ownerEmail.trim().toLowerCase(),
         ownerPhone: ownerPhone.trim(),
+        ownerName: ownerName?.trim() || null,
+        staffCount: staffCount?.trim() || null,
+        managementMethod: managementMethod?.trim() || null,
         status: 'pending',
       })
       .returning();
@@ -131,7 +137,10 @@ export async function requestSaloonSetup(
             adminEmail,
             saloonName.trim(),
             targetEmail,
-            ownerPhone.trim()
+            ownerPhone.trim(),
+            ownerName,
+            staffCount,
+            managementMethod
           )
         )
       );
@@ -179,7 +188,7 @@ export async function approveSaloonRequestAction(requestId: string) {
     // Trigger direct invitation generation logic
     const res = await createSaloonAndOwner(
       request.saloonName,
-      'Owner User', // placeholder owner name to start setup
+      request.ownerName || 'Owner User',
       request.ownerPhone,
       request.ownerEmail
     );

@@ -6,6 +6,9 @@ export const saloonRequestsTable = pgTable('saloon_requests', {
   saloonName: text('saloon_name').notNull(),
   ownerEmail: text('owner_email').notNull(),
   ownerPhone: text('owner_phone').notNull(),
+  ownerName: text('owner_name'),
+  staffCount: text('staff_count'),
+  managementMethod: text('management_method'),
   status: reviewStatusEnum('status').notNull().default('pending'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at')

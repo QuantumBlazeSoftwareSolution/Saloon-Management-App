@@ -4,8 +4,20 @@ export async function sendAdminNotificationEmail(
   toEmail: string, 
   saloonName: string, 
   ownerEmail: string, 
-  ownerPhone: string
+  ownerPhone: string,
+  ownerName?: string,
+  staffCount?: string,
+  managementMethod?: string
 ) {
+  const detailsHtml = `
+    <p style="margin: 0 0 8px 0;"><strong>Saloon Name:</strong> ${saloonName}</p>
+    ${ownerName ? `<p style="margin: 0 0 8px 0;"><strong>Owner Name:</strong> ${ownerName}</p>` : ''}
+    <p style="margin: 0 0 8px 0;"><strong>Owner Email:</strong> ${ownerEmail}</p>
+    <p style="margin: 0 0 8px 0;"><strong>Phone Number:</strong> ${ownerPhone}</p>
+    ${staffCount ? `<p style="margin: 0 0 8px 0;"><strong>Staff Count:</strong> ${staffCount}</p>` : ''}
+    ${managementMethod ? `<p style="margin: 0;"><strong>Current Management Method:</strong> ${managementMethod}</p>` : ''}
+  `;
+
   const mailOptions = {
     from: fromEmail,
     to: toEmail,
@@ -19,9 +31,7 @@ export async function sendAdminNotificationEmail(
           A user has submitted a saloon registration request with the following details:
         </p>
         <div style="background-color: #f9fafb; border: 1px solid #f3f4f6; padding: 15px; border-radius: 8px; font-size: 13px;">
-          <p style="margin: 0 0 8px 0;"><strong>Saloon Name:</strong> ${saloonName}</p>
-          <p style="margin: 0 0 8px 0;"><strong>Owner Email:</strong> ${ownerEmail}</p>
-          <p style="margin: 0;"><strong>Phone Number:</strong> ${ownerPhone}</p>
+          ${detailsHtml}
         </div>
         <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 20px;">
           Log into the Super Admin panel to review and approve this request.
