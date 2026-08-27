@@ -4,8 +4,8 @@ export async function sendRequestConfirmationEmail(toEmail: string, saloonName: 
   const mailOptions = {
     from: fromEmail,
     to: toEmail,
-    subject: 'Saloon Setup Request Received - The Barber',
-    text: `Your request for "${saloonName}" has been successfully received. Soon as possible your saloon will be created in the Sri Lankan number #01 saloon management platform "The Barber". Powered by Quantum Blaze - www.quantumblaze.lk`,
+    subject: 'Saloon Setup Request Received - The Fade Master',
+    text: `Your request for "${saloonName}" has been successfully received. Soon as possible your saloon will be created in the Sri Lankan number #01 saloon management platform "The Fade Master". Powered by Quantum Blaze - www.quantumblaze.lk`,
     html: `
       <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff;">
         <h2 style="color: #a855f7; text-align: center; margin-bottom: 5px;">Request Received!</h2>
@@ -14,7 +14,7 @@ export async function sendRequestConfirmationEmail(toEmail: string, saloonName: 
           Hi there,
           <br/><br/>
           Your request for <strong>${saloonName}</strong> has been successfully received. 
-          Soon as possible your saloon will be created in the Sri Lankan number #01 saloon management platform <strong>"The Barber"</strong>.
+          Soon as possible your saloon will be created in the Sri Lankan number #01 saloon management platform <strong>"The Fade Master"</strong>.
         </p>
         <div style="border-top: 1px solid #f3f4f6; margin-top: 30px; padding-top: 15px; text-align: center;">
           <p style="color: #9ca3af; font-size: 11px; margin: 0;">Powered by Quantum Blaze</p>

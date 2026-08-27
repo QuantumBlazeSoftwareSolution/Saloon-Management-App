@@ -32,7 +32,11 @@ export default function OwnerTodayPage() {
   const [pendingAction, setPendingAction] = useState<{ id: string; status: 'cancelled' | 'no_show'; title: string; message: string } | null>(null);
 
   const fetchDbData = async () => {
-    if (!currentProfile || !currentProfile.saloonId) return;
+    if (!currentProfile || !currentProfile.saloonId) {
+      console.warn('[fetchDbData] currentProfile or saloonId is missing:', currentProfile);
+      setIsLoading(false);
+      return;
+    }
     try {
       const logsRes = await getAllServiceLogs(currentProfile.saloonId);
       if (logsRes.success && logsRes.data) {
