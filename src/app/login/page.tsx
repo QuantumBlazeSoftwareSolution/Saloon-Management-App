@@ -137,7 +137,10 @@ export default function LoginPage() {
           transition={{ delay: 0.4 }}
           className="mt-12 text-center text-xs text-zinc-650"
         >
-          &copy; {new Date().getFullYear()} Fade Master PWA. Designed for offline speed.
+          <p>&copy; {new Date().getFullYear()} Fade Master PWA. Designed for offline speed.</p>
+          <p className="text-[10px] text-zinc-700 mt-1">
+            Powered by <a href="https://www.quantumblaze.lk" target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 underline transition-colors">Quantum Blaze</a>
+          </p>
         </motion.div>
       </div>
 
