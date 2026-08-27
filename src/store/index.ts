@@ -46,6 +46,8 @@ interface SaloonState {
   saloonName: string;
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
+  deferredPrompt: any;
+  setDeferredPrompt: (prompt: any) => void;
   
   
   login: (role: 'barber' | 'owner' | 'admin', identifier: string, pin?: string) => boolean;
@@ -77,6 +79,8 @@ export const useSaloonStore = create<SaloonState>()(
       saloonName: 'Fade Master',
       _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
+      deferredPrompt: null,
+      setDeferredPrompt: (prompt) => set({ deferredPrompt: prompt }),
 
       login: (role, identifier, pin) => {
         const state = get();
@@ -222,6 +226,10 @@ export const useSaloonStore = create<SaloonState>()(
     }),
     {
       name: 'saloon-mgt-pwa-storage',
+      partialize: (state) => {
+        const { deferredPrompt, ...rest } = state;
+        return rest;
+      },
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.setHasHydrated(true);

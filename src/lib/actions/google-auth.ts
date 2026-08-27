@@ -33,6 +33,7 @@ async function verifyFirebaseIdToken(idToken: string) {
     uid: user.localId,
     email: user.email,
     name: user.displayName || 'Owner User',
+    phoneNumber: user.phoneNumber,
   };
 }
 
@@ -208,5 +209,61 @@ export async function loginWithGoogleAction(idToken: string) {
   } catch (error: any) {
     console.error(`[loginWithGoogleAction] Error: ${error.message}`);
     return { success: false, error: 'Google Login failed. Please try again.' };
+  }
+}
+
+export async function loginBarberWithPhoneAction(idToken: string) {
+  console.log(`[loginBarberWithPhoneAction] Verifying barber phone auth token`);
+  try {
+    const firebaseUser = await verifyFirebaseIdToken(idToken);
+    if (!firebaseUser || !firebaseUser.phoneNumber) {
+      return { success: false, error: 'Failed to authenticate phone number.' };
+    }
+
+    const rawPhone = firebaseUser.phoneNumber; // e.g. "+94771234567"
+    const digits = rawPhone.replace(/\D/g, '');
+    const last9Digits = digits.slice(-9); // "771234567"
+
+    // Fetch all active barbers and match on last 9 digits of their phone
+    const profiles = await db
+      .select()
+      .from(profilesTable)
+      .where(eq(profilesTable.role, 'barber'));
+
+    const barberProfile = profiles.find(
+      (p) => p.phone.replace(/\D/g, '').endsWith(last9Digits) && p.active
+    );
+
+    if (!barberProfile) {
+      return { success: false, error: 'No active barber profile found registered with this phone number.' };
+    }
+
+    // Auto-create or link usersTable record
+    const existingUser = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.profileId, barberProfile.id))
+      .limit(1)
+      .then(rows => rows[0]);
+
+    if (!existingUser) {
+      await db
+        .insert(usersTable)
+        .values({
+          phone: barberProfile.phone,
+          role: 'barber',
+          profileId: barberProfile.id,
+        });
+    } else {
+      await db
+        .update(usersTable)
+        .set({ phone: barberProfile.phone })
+        .where(eq(usersTable.id, existingUser.id));
+    }
+
+    return { success: true, profile: barberProfile };
+  } catch (error: any) {
+    console.error(`[loginBarberWithPhoneAction] Error: ${error.message}`);
+    return { success: false, error: error.message || 'Phone sign-in failed.' };
   }
 }

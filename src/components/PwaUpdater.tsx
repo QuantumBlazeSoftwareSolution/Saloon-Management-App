@@ -7,7 +7,8 @@ import { Download, X } from 'lucide-react';
 
 export default function PwaUpdater() {
   const authRole = useSaloonStore((state) => state.authRole);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const deferredPrompt = useSaloonStore((state) => state.deferredPrompt);
+  const setDeferredPrompt = useSaloonStore((state) => state.setDeferredPrompt);
   const [showInstallSheet, setShowInstallSheet] = useState(false);
 
   const [isStandalone, setIsStandalone] = useState(false);
